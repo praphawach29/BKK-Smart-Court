@@ -232,6 +232,10 @@
             letter-spacing: 0;
         }
 
+        .mobile-title-break::before {
+            content: " ";
+        }
+
         .overview-panel p {
             max-width: 720px;
             margin: 14px 0 0;
@@ -703,6 +707,14 @@
                 line-height: 1.08;
             }
 
+            .mobile-title-break {
+                display: block;
+            }
+
+            .mobile-title-break::before {
+                content: "";
+            }
+
             .overview-panel p {
                 font-size: 0.95rem;
                 line-height: 1.65;
@@ -939,7 +951,7 @@
                     <div class="overview-content">
                         <div>
                             <span class="eyebrow"><span class="status-dot"></span><span id="sourceLabel">กำลังเชื่อมต่อข้อมูล</span></span>
-                            <h1 id="page-title">ภาพรวมมาตรฐานลานกีฬา</h1>
+                            <h1 id="page-title">ภาพรวมมาตรฐาน<span class="mobile-title-break">ลานกีฬา</span></h1>
                             <p>ติดตามจำนวนลานกีฬา ระดับผลประเมิน จุดที่ต้องปรับปรุง และสถิติการใช้งานจากข้อมูลที่บันทึกผ่านแบบฟอร์ม</p>
                         </div>
                         <div class="overview-meta">
