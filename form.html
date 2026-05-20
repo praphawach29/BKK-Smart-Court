@@ -656,34 +656,16 @@
                             <span class="section-index">1</span>
                             <div>
                                 <h2>ข้อมูลพื้นฐาน</h2>
-                                <p>เลือกข้อมูลตามลำดับเพื่อให้ระบบเติมรายชื่อและตำแหน่งให้อัตโนมัติ</p>
+                                <p>เลือกผู้ประเมินก่อน เพื่อให้ระบบแสดงเฉพาะลานกีฬาที่ยังไม่ได้ประเมิน</p>
                             </div>
                         </div>
                     </div>
                     <div class="section-body">
                         <div class="field-grid">
                             <div class="field">
-                                <label class="form-label" for="zoneSelect">โซนพื้นที่ <span class="hint">จำเป็น</span></label>
-                                <select id="zoneSelect" name="zone" class="form-select" required disabled>
-                                    <option value="" disabled selected>กำลังโหลดข้อมูลจากฐานข้อมูล...</option>
-                                </select>
-                            </div>
-                            <div class="field">
-                                <label class="form-label" for="districtSelect">สำนักงานเขต <span class="hint">จำเป็น</span></label>
-                                <select id="districtSelect" name="district" class="form-select" required disabled>
-                                    <option value="" disabled selected>-- โปรดเลือกโซนก่อน --</option>
-                                </select>
-                            </div>
-                            <div class="field full">
-                                <label class="form-label" for="nameSelect">ชื่อลานกีฬา <span class="hint">จำเป็น</span></label>
-                                <select id="nameSelect" name="name" class="form-select" required disabled>
-                                    <option value="" disabled selected>-- โปรดเลือกเขตก่อน --</option>
-                                </select>
-                            </div>
-                            <div class="field">
                                 <label class="form-label" for="assessorSelect">ชื่อผู้ประเมิน <span class="hint">จำเป็น</span></label>
                                 <select id="assessorSelect" name="assessorName" class="form-select" required disabled>
-                                    <option value="" disabled selected>-- โปรดเลือกลานกีฬาก่อน --</option>
+                                    <option value="" disabled selected>กำลังโหลดรายชื่อผู้ประเมิน...</option>
                                 </select>
                             </div>
                             <div class="field">
@@ -701,6 +683,24 @@
                             <div class="field">
                                 <label class="form-label" for="phoneInput">เบอร์โทรศัพท์</label>
                                 <input type="text" id="phoneInput" name="assessorPhone" class="form-input" placeholder="ระบบจะแสดงข้อมูลอัตโนมัติ" readonly>
+                            </div>
+                            <div class="field">
+                                <label class="form-label" for="zoneSelect">โซนพื้นที่ <span class="hint">จำเป็น</span></label>
+                                <select id="zoneSelect" name="zone" class="form-select" required disabled>
+                                    <option value="" disabled selected>-- โปรดเลือกผู้ประเมินก่อน --</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label class="form-label" for="districtSelect">สำนักงานเขต <span class="hint">จำเป็น</span></label>
+                                <select id="districtSelect" name="district" class="form-select" required disabled>
+                                    <option value="" disabled selected>-- โปรดเลือกโซนก่อน --</option>
+                                </select>
+                            </div>
+                            <div class="field full">
+                                <label class="form-label" for="nameSelect">ชื่อลานกีฬา <span class="hint">จำเป็น</span></label>
+                                <select id="nameSelect" name="name" class="form-select" required disabled>
+                                    <option value="" disabled selected>-- โปรดเลือกเขตก่อน --</option>
+                                </select>
                             </div>
                             <div class="field full">
                                 <label class="form-label">ประเภทลานกีฬา <span class="hint">เลือก 1 รายการ</span></label>
@@ -1140,9 +1140,25 @@
             }
         };
 
-        const hasUnevaluatedAssessorForField = (zone, district, field) => allData
-            .filter(row => row.zone === zone && row.district === district && row.field === field)
-            .some(row => row.assessor && !evaluatedAssessorFieldKeys.has(makeAssessorFieldKey(zone, district, field, row.assessor)));
+        const getAvailableRowsForAssessor = assessor => allData.filter(row =>
+            row.assessor === assessor &&
+            !evaluatedAssessorFieldKeys.has(makeAssessorFieldKey(row.zone, row.district, row.field, row.assessor))
+        );
+
+        const populateAssessorOptions = () => {
+            const assessors = [...new Set(allData
+                .filter(row => row.assessor && getAvailableRowsForAssessor(row.assessor).length)
+                .map(row => row.assessor))]
+                .sort((a, b) => a.localeCompare(b, 'th'));
+
+            if (assessors.length) {
+                setOptions(assessorSelect, '-- เลือกชื่อผู้ประเมิน --', assessors);
+                assessorSelect.disabled = false;
+            } else {
+                setOptions(assessorSelect, '-- กรรมการทุกคนประเมินครบแล้ว --', []);
+                assessorSelect.disabled = true;
+            }
+        };
 
         const loadAssessorData = async () => {
             dataStatus.textContent = 'กำลังโหลด';
@@ -1153,10 +1169,10 @@
                     const rows = await parseAssessorSheet(sheetName);
                     if (rows.length) {
                         allData = rows;
-                        const zones = [...new Set(allData.map(row => row.zone).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'th'));
-
-                        setOptions(zoneSelect, '-- เลือกโซนพื้นที่ --', zones);
-                        zoneSelect.disabled = false;
+                        populateAssessorOptions();
+                        resetSelect(zoneSelect, '-- โปรดเลือกผู้ประเมินก่อน --');
+                        resetSelect(districtSelect, '-- โปรดเลือกโซนก่อน --');
+                        resetSelect(nameSelect, '-- โปรดเลือกเขตก่อน --');
                         dataStatus.textContent = `พร้อมใช้งาน`;
                         updateProgress();
                         return;
@@ -1167,21 +1183,45 @@
             }
 
             dataStatus.textContent = 'โหลดไม่สำเร็จ';
-            setOptions(zoneSelect, '-- ไม่พบข้อมูลรายชื่อกรรมการ --', []);
+            setOptions(assessorSelect, '-- ไม่พบข้อมูลรายชื่อกรรมการ --', []);
             showAlert('ยังไม่พบข้อมูลกรรมการผู้ประเมินในชีต กรุณาตรวจสอบชื่อแท็บ เช่น "ชื่อกรรมการ" หรือ "กรรมการผู้ประเมิน" และตั้งค่าการแชร์ชีตเป็น Anyone with the link can view', 'error');
         };
 
         loadAssessorData();
 
+        assessorSelect.addEventListener('change', (e) => {
+            const selectedAssessor = e.target.value;
+
+            resetSelect(zoneSelect, '-- เลือกโซนพื้นที่ --');
+            resetSelect(districtSelect, '-- โปรดเลือกโซนก่อน --');
+            resetSelect(nameSelect, '-- โปรดเลือกเขตก่อน --');
+            clearAssessorDetails();
+
+            const foundRow = allData.find(row => row.assessor === selectedAssessor);
+            setAssessorDetails(foundRow);
+
+            const zones = [...new Set(getAvailableRowsForAssessor(selectedAssessor)
+                .map(row => row.zone).filter(Boolean))]
+                .sort((a, b) => a.localeCompare(b, 'th'));
+
+            if (zones.length) {
+                setOptions(zoneSelect, '-- เลือกโซนพื้นที่ --', zones);
+                zoneSelect.disabled = false;
+            } else {
+                setOptions(zoneSelect, '-- ผู้ประเมินคนนี้ประเมินครบแล้ว --', []);
+                zoneSelect.disabled = true;
+            }
+            updateProgress();
+        });
+
         zoneSelect.addEventListener('change', (e) => {
+            const selectedAssessor = assessorSelect.value;
             const selectedZone = e.target.value;
 
             resetSelect(districtSelect, '-- เลือกสำนักงานเขต --');
             resetSelect(nameSelect, '-- โปรดเลือกเขตก่อน --');
-            resetSelect(assessorSelect, '-- โปรดเลือกลานกีฬาก่อน --');
-            clearAssessorDetails();
 
-            const districts = [...new Set(allData
+            const districts = [...new Set(getAvailableRowsForAssessor(selectedAssessor)
                 .filter(row => row.zone === selectedZone)
                 .map(row => row.district).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'th'));
 
@@ -1191,51 +1231,32 @@
         });
 
         districtSelect.addEventListener('change', (e) => {
+            const selectedAssessor = assessorSelect.value;
             const selectedZone = zoneSelect.value;
             const selectedDistrict = e.target.value;
 
             resetSelect(nameSelect, '-- เลือกชื่อลานกีฬา --');
-            resetSelect(assessorSelect, '-- โปรดเลือกลานกีฬาก่อน --');
-            clearAssessorDetails();
 
-            const fields = [...new Set(allData
+            const fields = [...new Set(getAvailableRowsForAssessor(selectedAssessor)
                 .filter(row => row.zone === selectedZone && row.district === selectedDistrict)
                 .map(row => row.field).filter(Boolean))]
-                .filter(field => hasUnevaluatedAssessorForField(selectedZone, selectedDistrict, field))
                 .sort((a, b) => a.localeCompare(b, 'th'));
 
             if (fields.length) {
                 setOptions(nameSelect, '-- เลือกชื่อลานกีฬา --', fields);
                 nameSelect.disabled = false;
             } else {
-                setOptions(nameSelect, '-- กรรมการในเขตนี้ประเมินครบทุกลานแล้ว --', []);
+                setOptions(nameSelect, '-- ผู้ประเมินคนนี้ประเมินลานในเขตนี้ครบแล้ว --', []);
                 nameSelect.disabled = true;
             }
             updateProgress();
         });
 
         nameSelect.addEventListener('change', (e) => {
+            const selectedAssessor = assessorSelect.value;
             const selectedZone = zoneSelect.value;
             const selectedDistrict = districtSelect.value;
             const selectedField = e.target.value;
-
-            clearAssessorDetails();
-            const assessors = [...new Set(allData
-                .filter(row => row.zone === selectedZone && row.district === selectedDistrict && row.field === selectedField)
-                .map(row => row.assessor).filter(Boolean))]
-                .filter(assessor => !evaluatedAssessorFieldKeys.has(makeAssessorFieldKey(selectedZone, selectedDistrict, selectedField, assessor)))
-                .sort((a, b) => a.localeCompare(b, 'th'));
-
-            setOptions(assessorSelect, '-- เลือกชื่อผู้ประเมิน --', assessors.length ? assessors : ['ไม่พบรายชื่อในระบบ']);
-            assessorSelect.disabled = false;
-            updateProgress();
-        });
-
-        assessorSelect.addEventListener('change', (e) => {
-            const selectedZone = zoneSelect.value;
-            const selectedDistrict = districtSelect.value;
-            const selectedField = nameSelect.value;
-            const selectedAssessor = e.target.value;
 
             const foundRow = allData.find(row =>
                 row.zone === selectedZone &&
@@ -1285,9 +1306,10 @@
                     showSaveAlert('success', 'บันทึกข้อมูลสำเร็จ', 'ระบบได้ส่งข้อมูลไปยัง Google Sheets เรียบร้อยแล้ว');
                     evaluatedAssessorFieldKeys.add(makeAssessorFieldKey(submittedZone, submittedDistrict, submittedField, submittedAssessor));
                     form.reset();
+                    populateAssessorOptions();
+                    resetSelect(zoneSelect, '-- โปรดเลือกผู้ประเมินก่อน --');
                     resetSelect(districtSelect, '-- โปรดเลือกโซนก่อน --');
                     resetSelect(nameSelect, '-- โปรดเลือกเขตก่อน --');
-                    resetSelect(assessorSelect, '-- โปรดเลือกลานกีฬาก่อน --');
                     clearAssessorDetails();
                     updateProgress();
                     window.scrollTo({ top: 0, behavior: 'smooth' });
