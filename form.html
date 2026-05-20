@@ -1009,8 +1009,9 @@
 
             if (!cleanRows.length) return [];
 
-            const headerRow = isLikelyHeader(cleanRows[0]) ? cleanRows[0] : [];
-            const dataRows = headerRow.length ? cleanRows.slice(1) : cleanRows;
+            const headerIndex = cleanRows.findIndex(isLikelyHeader);
+            const headerRow = headerIndex >= 0 ? cleanRows[headerIndex] : [];
+            const dataRows = headerRow.length ? cleanRows.slice(headerIndex + 1) : cleanRows;
             const hasLeadingIndex = !headerRow.length && dataRows.some(row => /^\d+$/.test(row[0]) && row.length >= 6);
 
             const zoneIndex = headerRow.length ? findColumnIndex(headerRow, ['โซน', 'zone'], hasLeadingIndex ? 1 : 0) : (hasLeadingIndex ? 1 : 0);
@@ -1033,12 +1034,21 @@
                     division: row[divisionIndex] || '',
                     phone: row[phoneIndex] || ''
                 }))
-                .filter(item => item.zone && item.district && item.field && item.assessor);
+                .filter(item =>
+                    item.zone &&
+                    item.district &&
+                    item.field &&
+                    item.assessor &&
+                    item.zone !== 'โซน' &&
+                    item.district !== 'เขต' &&
+                    item.field !== 'ชื่อลาน' &&
+                    !/^[A-Z]$/.test(item.zone)
+                );
         };
 
         const loadSheetRowsJsonp = sheetName => {
             const callbackName = `sheetCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-            const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=${encodeURIComponent(`out:json;responseHandler:${callbackName}`)}&sheet=${encodeURIComponent(sheetName)}`;
+            const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=${encodeURIComponent(`out:json;responseHandler:${callbackName}`)}&headers=1&sheet=${encodeURIComponent(sheetName)}`;
 
             return new Promise((resolve, reject) => {
                 const script = document.createElement('script');
