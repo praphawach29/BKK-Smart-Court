@@ -597,13 +597,39 @@
         }
 
         @media (max-width: 1040px) {
+            .app-shell {
+                width: min(100% - 28px, 1280px);
+            }
+
             .hero,
             .dashboard-grid {
                 grid-template-columns: 1fr;
             }
 
+            .control-panel {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                align-items: end;
+            }
+
+            .control-panel .panel-title,
+            .control-panel .sync-state {
+                grid-column: 1 / -1;
+            }
+
             .kpi-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .overview-panel {
+                min-height: 260px;
+            }
+
+            .overview-content {
+                min-height: 206px;
+            }
+
+            .chart-box {
+                height: 280px;
             }
         }
 
@@ -618,34 +644,236 @@
                 align-items: stretch;
                 flex-direction: column;
                 margin-bottom: 16px;
+                padding: 8px 10px 14px;
             }
 
             .top-actions {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+
+            .nav-link,
+            .primary-link,
+            .ghost-button {
+                min-height: 44px;
+                padding: 0 10px;
+                font-size: 0.86rem;
+                white-space: nowrap;
+            }
+
+            .brand-mark {
+                width: 38px;
+                height: 38px;
+            }
+
+            .brand-title {
+                font-size: 0.95rem;
             }
 
             .brand-subtitle {
                 display: none;
             }
 
+            .hero {
+                gap: 14px;
+                margin-bottom: 14px;
+            }
+
             .overview-panel {
-                min-height: 330px;
-                padding: 22px;
+                min-height: 300px;
+                padding: 20px;
+                background-position: 58% center;
+            }
+
+            .overview-content {
+                min-height: 258px;
+            }
+
+            .overview-panel h1 {
+                font-size: clamp(1.85rem, 11vw, 2.75rem);
+                line-height: 1.08;
+            }
+
+            .overview-panel p {
+                font-size: 0.95rem;
+                line-height: 1.65;
+            }
+
+            .overview-meta {
+                display: grid;
+                gap: 8px;
+            }
+
+            .meta-pill {
+                width: 100%;
+                justify-content: space-between;
+                border-radius: 8px;
+            }
+
+            .control-panel {
+                grid-template-columns: 1fr;
+                gap: 12px;
+                padding: 16px;
             }
 
             .kpi-grid {
                 grid-template-columns: 1fr;
+                gap: 10px;
+                margin-bottom: 14px;
+            }
+
+            .kpi-card {
+                min-height: auto;
+                padding: 16px;
+            }
+
+            .kpi-value {
+                font-size: 2rem;
+            }
+
+            .dashboard-grid {
+                gap: 14px;
+                margin-bottom: 14px;
             }
 
             .card-head {
                 align-items: stretch;
                 flex-direction: column;
+                padding: 16px;
+                gap: 12px;
+            }
+
+            .card-body {
+                padding: 14px 14px 16px;
             }
 
             .chart-box,
             .chart-box.short {
-                height: 260px;
+                height: 240px;
+            }
+
+            .table-tools {
+                display: grid;
+                grid-template-columns: 1fr;
+            }
+
+            .search-box {
+                min-width: 0;
+            }
+
+            .table-wrap {
+                overflow: visible;
+                padding: 0 12px 12px;
+            }
+
+            table,
+            thead,
+            tbody,
+            tr,
+            td {
+                display: block;
+                width: 100%;
+            }
+
+            table {
+                white-space: normal;
+                font-size: 0.88rem;
+            }
+
+            thead {
+                display: none;
+            }
+
+            tbody {
+                display: grid;
+                gap: 10px;
+            }
+
+            tbody tr {
+                overflow: hidden;
+                border: 1px solid #edf2f7;
+                border-radius: 8px;
+                box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+            }
+
+            td {
+                display: grid;
+                grid-template-columns: minmax(94px, 0.42fr) minmax(0, 0.58fr);
+                gap: 12px;
+                align-items: center;
+                padding: 10px 12px;
+                border-bottom: 1px solid #edf2f7;
+                text-align: right;
+            }
+
+            td:last-child {
+                border-bottom: 0;
+            }
+
+            td::before {
+                content: attr(data-label);
+                color: #64748b;
+                font-size: 0.78rem;
+                font-weight: 800;
+                text-align: left;
+            }
+
+            td.center,
+            td.right {
+                text-align: right;
+            }
+
+            .place-name,
+            .place-meta {
+                text-align: right;
+            }
+
+            .score-chip,
+            .status-chip {
+                justify-self: end;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .app-shell {
+                width: min(100% - 14px, 1280px);
+            }
+
+            .top-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .overview-panel {
+                padding: 18px;
+            }
+
+            .overview-panel h1 {
+                font-size: 2rem;
+            }
+
+            .chart-box,
+            .chart-box.short {
+                height: 220px;
+            }
+
+            td {
+                grid-template-columns: 1fr;
+                gap: 4px;
+                text-align: left;
+            }
+
+            td::before,
+            .place-name,
+            .place-meta,
+            td.center,
+            td.right {
+                text-align: left;
+            }
+
+            .score-chip,
+            .status-chip {
+                justify-self: start;
             }
         }
     </style>
@@ -1272,19 +1500,19 @@
                 const status = getStatus(item.totalScore);
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>
+                    <td data-label="พื้นที่">
                         <div class="place-name">${escapeHtml(item.district)}</div>
                         <div class="place-meta">${escapeHtml(item.zone)}</div>
                     </td>
-                    <td>
+                    <td data-label="ชื่อลานกีฬา">
                         <div class="place-name">${escapeHtml(item.name)}</div>
                         <div class="place-meta">${escapeHtml(item.type)}</div>
                     </td>
-                    <td class="center"><span class="score-chip">${item.physicalAverage.toFixed(1)}</span></td>
-                    <td class="center"><span class="score-chip">${item.managementAverage.toFixed(1)}</span></td>
-                    <td class="center"><span class="score-chip">${item.userCount.toLocaleString('th-TH')}</span></td>
-                    <td class="center"><strong>${item.totalScore}%</strong></td>
-                    <td class="right"><span class="status-chip ${status.key}">${status.label}</span></td>
+                    <td class="center" data-label="กายภาพ"><span class="score-chip">${item.physicalAverage.toFixed(1)}</span></td>
+                    <td class="center" data-label="บริหาร"><span class="score-chip">${item.managementAverage.toFixed(1)}</span></td>
+                    <td class="center" data-label="ผู้ใช้"><span class="score-chip">${item.userCount.toLocaleString('th-TH')}</span></td>
+                    <td class="center" data-label="คะแนนรวม"><strong>${item.totalScore}%</strong></td>
+                    <td class="right" data-label="สถานะ"><span class="status-chip ${status.key}">${status.label}</span></td>
                 `;
                 el.tableBody.appendChild(tr);
             });
