@@ -897,7 +897,7 @@
         const phoneInput = document.getElementById('phoneInput');
 
         let allData = [];
-        let evaluatedFieldKeys = new Set();
+        let evaluatedAssessorFieldKeys = new Set();
 
         const sheetFieldMap = {
             zone: 'โซน',
@@ -999,7 +999,7 @@
         };
 
         const normalizeText = value => String(value || '').trim();
-        const makeFieldKey = (zone, district, field) => [zone, district, field].map(value => normalizeText(value).toLowerCase()).join('|');
+        const makeAssessorFieldKey = (zone, district, field, assessor) => [zone, district, field, assessor].map(value => normalizeText(value).toLowerCase()).join('|');
 
         const findColumnIndex = (headers, keywords, fallbackIndex) => {
             const normalizedHeaders = headers.map(header => normalizeText(header).toLowerCase());
@@ -1069,14 +1069,16 @@
             const zoneIndex = headerRow.length ? findColumnIndex(headerRow, ['โซน', 'zone'], -1) : -1;
             const districtIndex = headerRow.length ? findColumnIndex(headerRow, ['สำนักงานเขต', 'เขต', 'district'], -1) : -1;
             const fieldIndex = headerRow.length ? findColumnIndex(headerRow, ['ชื่อลาน', 'ชื่อลานกีฬา', 'ลานกีฬา', 'name'], -1) : -1;
+            const assessorIndex = headerRow.length ? findColumnIndex(headerRow, ['ชื่อผู้ประเมิน', 'ชื่อกรรมการ', 'กรรมการ', 'ผู้ประเมิน', 'assessor'], -1) : -1;
 
             return dataRows
                 .map(row => ({
                     zone: zoneIndex >= 0 ? row[zoneIndex] : '',
                     district: districtIndex >= 0 ? row[districtIndex] : '',
-                    field: fieldIndex >= 0 ? row[fieldIndex] : ''
+                    field: fieldIndex >= 0 ? row[fieldIndex] : '',
+                    assessor: assessorIndex >= 0 ? row[assessorIndex] : ''
                 }))
-                .filter(item => item.zone && item.district && item.field && item.zone !== 'โซน');
+                .filter(item => item.zone && item.district && item.field && item.assessor && item.zone !== 'โซน');
         };
 
         const loadSheetRowsJsonp = sheetName => {
@@ -1123,13 +1125,13 @@
         const parseResponseSheet = async sheetName => normalizeEvaluatedRows(await loadSheetRowsJsonp(sheetName));
 
         const loadEvaluatedFields = async () => {
-            evaluatedFieldKeys = new Set();
+            evaluatedAssessorFieldKeys = new Set();
 
             for (const sheetName of RESPONSE_SHEET_CANDIDATES) {
                 try {
                     const rows = await parseResponseSheet(sheetName);
                     if (rows.length) {
-                        evaluatedFieldKeys = new Set(rows.map(row => makeFieldKey(row.zone, row.district, row.field)));
+                        evaluatedAssessorFieldKeys = new Set(rows.map(row => makeAssessorFieldKey(row.zone, row.district, row.field, row.assessor)));
                         return;
                     }
                 } catch (error) {
@@ -1137,6 +1139,10 @@
                 }
             }
         };
+
+        const hasUnevaluatedAssessorForField = (zone, district, field) => allData
+            .filter(row => row.zone === zone && row.district === district && row.field === field)
+            .some(row => row.assessor && !evaluatedAssessorFieldKeys.has(makeAssessorFieldKey(zone, district, field, row.assessor)));
 
         const loadAssessorData = async () => {
             dataStatus.textContent = 'กำลังโหลด';
@@ -1195,14 +1201,14 @@
             const fields = [...new Set(allData
                 .filter(row => row.zone === selectedZone && row.district === selectedDistrict)
                 .map(row => row.field).filter(Boolean))]
-                .filter(field => !evaluatedFieldKeys.has(makeFieldKey(selectedZone, selectedDistrict, field)))
+                .filter(field => hasUnevaluatedAssessorForField(selectedZone, selectedDistrict, field))
                 .sort((a, b) => a.localeCompare(b, 'th'));
 
             if (fields.length) {
                 setOptions(nameSelect, '-- เลือกชื่อลานกีฬา --', fields);
                 nameSelect.disabled = false;
             } else {
-                setOptions(nameSelect, '-- ลานกีฬาในเขตนี้ประเมินครบแล้ว --', []);
+                setOptions(nameSelect, '-- กรรมการในเขตนี้ประเมินครบทุกลานแล้ว --', []);
                 nameSelect.disabled = true;
             }
             updateProgress();
@@ -1216,7 +1222,9 @@
             clearAssessorDetails();
             const assessors = [...new Set(allData
                 .filter(row => row.zone === selectedZone && row.district === selectedDistrict && row.field === selectedField)
-                .map(row => row.assessor).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'th'));
+                .map(row => row.assessor).filter(Boolean))]
+                .filter(assessor => !evaluatedAssessorFieldKeys.has(makeAssessorFieldKey(selectedZone, selectedDistrict, selectedField, assessor)))
+                .sort((a, b) => a.localeCompare(b, 'th'));
 
             setOptions(assessorSelect, '-- เลือกชื่อผู้ประเมิน --', assessors.length ? assessors : ['ไม่พบรายชื่อในระบบ']);
             assessorSelect.disabled = false;
@@ -1255,6 +1263,7 @@
             const submittedZone = zoneSelect.value;
             const submittedDistrict = districtSelect.value;
             const submittedField = nameSelect.value;
+            const submittedAssessor = assessorSelect.value;
 
             if(!GOOGLE_APPS_SCRIPT_URL) {
                 showSaveAlert('error', 'ยังไม่ได้ตั้งค่า Apps Script', 'กรุณาใส่ลิงก์ Google Apps Script ในซอร์สโค้ดก่อนใช้งานจริง');
@@ -1274,7 +1283,7 @@
             .then(data => {
                 if(data.status === 'success') {
                     showSaveAlert('success', 'บันทึกข้อมูลสำเร็จ', 'ระบบได้ส่งข้อมูลไปยัง Google Sheets เรียบร้อยแล้ว');
-                    evaluatedFieldKeys.add(makeFieldKey(submittedZone, submittedDistrict, submittedField));
+                    evaluatedAssessorFieldKeys.add(makeAssessorFieldKey(submittedZone, submittedDistrict, submittedField, submittedAssessor));
                     form.reset();
                     resetSelect(districtSelect, '-- โปรดเลือกโซนก่อน --');
                     resetSelect(nameSelect, '-- โปรดเลือกเขตก่อน --');
