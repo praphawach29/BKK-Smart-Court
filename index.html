@@ -28,6 +28,8 @@
 
         html {
             scroll-behavior: smooth;
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
         }
 
         body {
@@ -39,6 +41,7 @@
                 linear-gradient(135deg, rgba(37, 99, 235, 0.08), transparent 32rem),
                 linear-gradient(225deg, rgba(5, 150, 105, 0.08), transparent 34rem),
                 #f6f8fb;
+            overflow-x: hidden;
         }
 
         button,
@@ -841,7 +844,13 @@
             }
 
             .top-actions {
-                grid-template-columns: 1fr;
+                grid-template-columns: 0.95fr 1.05fr;
+            }
+
+            .nav-link,
+            .primary-link {
+                font-size: 0.82rem;
+                gap: 6px;
             }
 
             .overview-panel {
@@ -855,6 +864,23 @@
             .chart-box,
             .chart-box.short {
                 height: 220px;
+            }
+
+            td {
+                grid-template-columns: minmax(86px, 0.4fr) minmax(0, 0.6fr);
+                gap: 10px;
+                text-align: right;
+            }
+
+            .score-chip,
+            .status-chip {
+                justify-self: end;
+            }
+        }
+
+        @media (max-width: 350px) {
+            .top-actions {
+                grid-template-columns: 1fr;
             }
 
             td {
