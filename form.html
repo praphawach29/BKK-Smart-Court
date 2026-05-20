@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>บันทึกข้อมูลมาตรฐานลานกีฬา</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --ink: #0f172a;
+            --muted: #64748b;
+            --line: #dbe5ef;
+            --surface: #ffffff;
+            --surface-soft: #f8fafc;
+            --accent: #2563eb;
+            --accent-dark: #1d4ed8;
+            --success: #059669;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Sarabun', sans-serif;
+            color: var(--ink);
+            background:
+                linear-gradient(135deg, rgba(37, 99, 235, 0.08), transparent 34rem),
+                linear-gradient(225deg, rgba(5, 150, 105, 0.08), transparent 30rem),
+                #f6f8fb;
+        }
+
+        .page-shell {
+            width: min(1160px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 28px 0 48px;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 42px;
+            padding: 0 14px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.86);
+            color: #334155;
+            font-size: 0.92rem;
+            font-weight: 600;
+            text-decoration: none;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+            transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease;
+        }
+
+        .back-link:hover {
+            transform: translateY(-1px);
+            border-color: #b6c6d8;
+            background: #ffffff;
+        }
+
+        .hero {
+            position: relative;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 320px;
+            gap: 28px;
+            margin-bottom: 24px;
+            padding: 30px;
+            border: 1px solid rgba(203, 213, 225, 0.84);
+            border-radius: 8px;
+            background:
+                linear-gradient(135deg, rgba(15, 23, 42, 0.94), rgba(30, 41, 59, 0.92)),
+                url("https://images.unsplash.com/photo-1526232761682-d26e03ac148e?auto=format&fit=crop&w=1400&q=80") center/cover;
+            color: white;
+            box-shadow: 0 20px 44px rgba(15, 23, 42, 0.13);
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: linear-gradient(90deg, rgba(15, 23, 42, 0), rgba(15, 23, 42, 0.28));
+        }
+
+        .hero-content,
+        .hero-status {
+            position: relative;
+            z-index: 1;
+        }
+
+        .kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 14px;
+            color: #bfdbfe;
+            font-size: 0.92rem;
+            font-weight: 700;
+        }
+
+        .kicker-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: #34d399;
+            box-shadow: 0 0 0 6px rgba(52, 211, 153, 0.14);
+        }
+
+        .hero h1 {
+            max-width: 760px;
+            margin: 0;
+            color: #ffffff;
+            font-size: clamp(2rem, 4vw, 3.4rem);
+            line-height: 1.08;
+            font-weight: 700;
+            letter-spacing: 0;
+        }
+
+        .hero p {
+            max-width: 680px;
+            margin: 14px 0 0;
+            color: #dbeafe;
+            font-size: 1.04rem;
+            line-height: 1.7;
+        }
+
+        .hero-status {
+            align-self: end;
+            display: grid;
+            gap: 10px;
+            padding: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 8px;
+            background: rgba(15, 23, 42, 0.44);
+            backdrop-filter: blur(12px);
+        }
+
+        .status-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            color: #e2e8f0;
+            font-size: 0.9rem;
+        }
+
+        .status-row strong {
+            color: #ffffff;
+            font-size: 1rem;
+        }
+
+        .progress-track {
+            height: 8px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.14);
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #34d399, #60a5fa);
+            transition: width 220ms ease;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 230px minmax(0, 1fr);
+            gap: 22px;
+            align-items: start;
+        }
+
+        .form-nav {
+            position: sticky;
+            top: 18px;
+            display: grid;
+            gap: 8px;
+            padding: 10px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+        }
+
+        .form-nav a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 40px;
+            padding: 0 10px;
+            border-radius: 6px;
+            color: #475569;
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: background-color 160ms ease, color 160ms ease;
+        }
+
+        .form-nav a:hover,
+        .form-nav a.active {
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
+
+        .nav-number {
+            display: inline-grid;
+            width: 24px;
+            height: 24px;
+            place-items: center;
+            border-radius: 999px;
+            background: #e2e8f0;
+            color: #334155;
+            font-size: 0.76rem;
+        }
+
+        .form-nav a.active .nav-number,
+        .form-nav a:hover .nav-number {
+            background: #2563eb;
+            color: #ffffff;
+        }
+
+        form {
+            display: grid;
+            gap: 18px;
+        }
+
+        .form-section {
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.96);
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.055);
+            animation: rise 420ms ease both;
+        }
+
+        .form-section:focus-within {
+            border-color: #93c5fd;
+            box-shadow: 0 18px 40px rgba(37, 99, 235, 0.1);
+        }
+
+        .section-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 22px 24px;
+            border-bottom: 1px solid #edf2f7;
+            background: linear-gradient(180deg, #ffffff, #f8fafc);
+        }
+
+        .section-title {
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+        }
+
+        .section-index {
+            display: inline-grid;
+            flex: 0 0 auto;
+            width: 40px;
+            height: 40px;
+            place-items: center;
+            border-radius: 8px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-weight: 800;
+        }
+
+        .section-head h2 {
+            margin: 0;
+            color: #0f172a;
+            font-size: 1.22rem;
+            line-height: 1.35;
+            font-weight: 700;
+        }
+
+        .section-head p {
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-size: 0.93rem;
+            line-height: 1.55;
+        }
+
+        .section-body {
+            padding: 24px;
+        }
+
+        .field-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .field-grid.compact {
+            gap: 14px;
+        }
+
+        .field {
+            display: grid;
+            gap: 8px;
+        }
+
+        .field.full {
+            grid-column: 1 / -1;
+        }
+
+        .form-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            color: #334155;
+            font-size: 0.94rem;
+            font-weight: 700;
+            line-height: 1.45;
+        }
+
+        .hint {
+            color: #94a3b8;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            min-height: 46px;
+            padding: 0 13px;
+            border: 1px solid #cfd9e6;
+            border-radius: 7px;
+            background-color: #ffffff;
+            color: #0f172a;
+            font: inherit;
+            transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+        }
+
+        .form-input::placeholder {
+            color: #94a3b8;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            border-color: #2563eb;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.11);
+        }
+
+        .form-input:disabled,
+        .form-select:disabled,
+        .form-input[readonly] {
+            border-color: #e2e8f0;
+            background-color: #f1f5f9;
+            color: #64748b;
+            cursor: not-allowed;
+        }
+
+        .radio-group {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .radio-card {
+            position: relative;
+            display: flex;
+            min-height: 82px;
+            align-items: center;
+            gap: 12px;
+            padding: 14px;
+            border: 1px solid #dbe5ef;
+            border-radius: 8px;
+            background: #ffffff;
+            cursor: pointer;
+            transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+        }
+
+        .radio-card:hover {
+            transform: translateY(-1px);
+            border-color: #93c5fd;
+            box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+        }
+
+        .radio-card input {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent);
+        }
+
+        .radio-card strong {
+            display: block;
+            color: #0f172a;
+            font-size: 0.96rem;
+        }
+
+        .radio-card span {
+            display: block;
+            margin-top: 2px;
+            color: #64748b;
+            font-size: 0.82rem;
+        }
+
+        .rating-item {
+            display: grid;
+            grid-template-columns: minmax(170px, 1fr) minmax(180px, 230px);
+            gap: 14px;
+            align-items: center;
+            min-height: 64px;
+            padding: 10px 0;
+            border-bottom: 1px solid #edf2f7;
+        }
+
+        .rating-item:last-child {
+            border-bottom: 0;
+        }
+
+        .rating-label {
+            color: #334155;
+            font-size: 0.94rem;
+            font-weight: 700;
+            line-height: 1.5;
+        }
+
+        .input-with-unit {
+            position: relative;
+        }
+
+        .input-with-unit .form-input {
+            padding-right: 62px;
+        }
+
+        .unit {
+            position: absolute;
+            top: 50%;
+            right: 13px;
+            transform: translateY(-50%);
+            color: #64748b;
+            font-weight: 700;
+            pointer-events: none;
+        }
+
+        .alert-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 52px;
+            padding: 14px 16px;
+            border-radius: 8px;
+            font-size: 0.94rem;
+            font-weight: 600;
+        }
+
+        .alert-box.hidden {
+            display: none;
+        }
+
+        .submit-area {
+            position: sticky;
+            bottom: 0;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-top: 4px;
+            padding: 14px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.92);
+            box-shadow: 0 -14px 30px rgba(15, 23, 42, 0.08);
+            backdrop-filter: blur(12px);
+        }
+
+        .submit-note {
+            color: #64748b;
+            font-size: 0.9rem;
+            line-height: 1.45;
+        }
+
+        .submit-note strong {
+            display: block;
+            color: #0f172a;
+            font-size: 0.98rem;
+        }
+
+        .submit-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            min-width: 220px;
+            min-height: 52px;
+            padding: 0 20px;
+            border: 0;
+            border-radius: 8px;
+            background: var(--accent);
+            color: #ffffff;
+            font: inherit;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 14px 24px rgba(37, 99, 235, 0.26);
+            transition: transform 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-1px);
+            background: var(--accent-dark);
+            box-shadow: 0 16px 28px rgba(37, 99, 235, 0.31);
+        }
+
+        .submit-btn:disabled {
+            transform: none;
+            background: #94a3b8;
+            cursor: wait;
+            box-shadow: none;
+        }
+
+        @keyframes rise {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 980px) {
+            .hero,
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .form-nav {
+                position: static;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+
+            .form-nav a {
+                justify-content: center;
+            }
+
+            .form-nav .nav-text {
+                display: none;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .page-shell {
+                width: min(100% - 20px, 1160px);
+                padding-top: 14px;
+            }
+
+            .topbar {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .hero {
+                padding: 22px;
+            }
+
+            .section-head,
+            .section-body {
+                padding: 18px;
+            }
+
+            .field-grid,
+            .radio-group {
+                grid-template-columns: 1fr;
+            }
+
+            .rating-item {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .submit-area {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .submit-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-shell">
+        <div class="topbar">
+            <a href="index.html" class="back-link" aria-label="กลับหน้าแดชบอร์ด">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                กลับหน้าแดชบอร์ด
+            </a>
+        </div>
+
+        <header class="hero">
+            <div class="hero-content">
+                <div class="kicker"><span class="kicker-dot"></span>ระบบบันทึกข้อมูลลานกีฬา</div>
+                <h1>แบบฟอร์มประเมินมาตรฐานลานกีฬา</h1>
+                <p>กรอกข้อมูลพื้นที่ ผู้ประเมิน เกณฑ์มาตรฐาน และสถิติการใช้งาน เพื่อจัดเก็บเป็นฐานข้อมูลสำหรับติดตามและพัฒนาลานกีฬา</p>
+            </div>
+            <div class="hero-status" aria-live="polite">
+                <div class="status-row">
+                    <span>ความครบถ้วนของฟอร์ม</span>
+                    <strong id="progressText">0%</strong>
+                </div>
+                <div class="progress-track" aria-hidden="true">
+                    <div id="progressBar" class="progress-bar"></div>
+                </div>
+                <div class="status-row">
+                    <span>แหล่งข้อมูลรายชื่อ</span>
+                    <strong id="dataStatus">กำลังโหลด</strong>
+                </div>
+            </div>
+        </header>
+
+        <div class="layout">
+            <nav class="form-nav" aria-label="หัวข้อแบบฟอร์ม">
+                <a class="active" href="#section-basic"><span class="nav-number">1</span><span class="nav-text">ข้อมูลพื้นฐาน</span></a>
+                <a href="#section-physical"><span class="nav-number">2</span><span class="nav-text">กายภาพ</span></a>
+                <a href="#section-management"><span class="nav-number">3</span><span class="nav-text">บริหารจัดการ</span></a>
+                <a href="#section-stats"><span class="nav-number">4</span><span class="nav-text">สถิติ</span></a>
+            </nav>
+
+            <form id="sportsForm">
+                <section id="section-basic" class="form-section">
+                    <div class="section-head">
+                        <div class="section-title">
+                            <span class="section-index">1</span>
+                            <div>
+                                <h2>ข้อมูลพื้นฐาน</h2>
+                                <p>เลือกข้อมูลตามลำดับเพื่อให้ระบบเติมรายชื่อและตำแหน่งให้อัตโนมัติ</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section-body">
+                        <div class="field-grid">
+                            <div class="field">
+                                <label class="form-label" for="zoneSelect">โซนพื้นที่ <span class="hint">จำเป็น</span></label>
+                                <select id="zoneSelect" name="zone" class="form-select" required disabled>
+                                    <option value="" disabled selected>กำลังโหลดข้อมูลจากฐานข้อมูล...</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label class="form-label" for="districtSelect">สำนักงานเขต <span class="hint">จำเป็น</span></label>
+                                <select id="districtSelect" name="district" class="form-select" required disabled>
+                                    <option value="" disabled selected>-- โปรดเลือกโซนก่อน --</option>
+                                </select>
+                            </div>
+                            <div class="field full">
+                                <label class="form-label" for="nameSelect">ชื่อลานกีฬา <span class="hint">จำเป็น</span></label>
+                                <select id="nameSelect" name="name" class="form-select" required disabled>
+                                    <option value="" disabled selected>-- โปรดเลือกเขตก่อน --</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label class="form-label" for="assessorSelect">ชื่อผู้ประเมิน <span class="hint">จำเป็น</span></label>
+                                <select id="assessorSelect" name="assessorName" class="form-select" required disabled>
+                                    <option value="" disabled selected>-- โปรดเลือกลานกีฬาก่อน --</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label class="form-label" for="positionInput">ตำแหน่งผู้ประเมิน</label>
+                                <input type="text" id="positionInput" name="assessorPosition" class="form-input" placeholder="ระบบจะแสดงข้อมูลอัตโนมัติ" readonly required>
+                            </div>
+                            <div class="field">
+                                <label class="form-label" for="departmentInput">หน่วยงาน</label>
+                                <input type="text" id="departmentInput" name="assessorDepartment" class="form-input" placeholder="ระบบจะแสดงข้อมูลอัตโนมัติ" readonly>
+                            </div>
+                            <div class="field">
+                                <label class="form-label" for="divisionInput">กลุ่มงาน / ฝ่าย</label>
+                                <input type="text" id="divisionInput" name="assessorDivision" class="form-input" placeholder="ระบบจะแสดงข้อมูลอัตโนมัติ" readonly>
+                            </div>
+                            <div class="field">
+                                <label class="form-label" for="phoneInput">เบอร์โทรศัพท์</label>
+                                <input type="text" id="phoneInput" name="assessorPhone" class="form-input" placeholder="ระบบจะแสดงข้อมูลอัตโนมัติ" readonly>
+                            </div>
+                            <div class="field full">
+                                <label class="form-label">ประเภทลานกีฬา <span class="hint">เลือก 1 รายการ</span></label>
+                                <div class="radio-group">
+                                    <label class="radio-card">
+                                        <input type="radio" name="type" value="ลานกีฬา A" required>
+                                        <span><strong>ลานกีฬา A</strong><span>ระดับเขต</span></span>
+                                    </label>
+                                    <label class="radio-card">
+                                        <input type="radio" name="type" value="ลานกีฬา B" required>
+                                        <span><strong>ลานกีฬา B</strong><span>ระดับแขวง</span></span>
+                                    </label>
+                                    <label class="radio-card">
+                                        <input type="radio" name="type" value="ลานกีฬา C" required>
+                                        <span><strong>ลานกีฬา C</strong><span>ระดับชุมชน</span></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="section-physical" class="form-section">
+                    <div class="section-head">
+                        <div class="section-title">
+                            <span class="section-index">2</span>
+                            <div>
+                                <h2>ด้านกายภาพและสิ่งอำนวยความสะดวก</h2>
+                                <p>ประเมินสภาพพื้นที่ อุปกรณ์ และความพร้อมในการให้บริการ</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section-body">
+                        <div class="field-grid compact">
+                            <div class="rating-item">
+                                <label class="rating-label" for="fieldCondition">พื้นสนามและเส้นสนาม</label>
+                                <select id="fieldCondition" name="fieldCondition" class="form-select" required><option value="" disabled selected>-- เลือกเกณฑ์ --</option><option value="ดีมาก">ดีมาก</option><option value="ผ่านมาตรฐาน">ผ่านมาตรฐาน</option><option value="ต้องปรับปรุง">ต้องปรับปรุง</option></select>
+                            </div>
+                            <div class="rating-item">
+                                <label class="rating-label" for="lighting">ระบบไฟฟ้าส่องสว่าง</label>
+                                <select id="lighting" name="lighting" class="form-select" required><option value="" disabled selected>-- เลือกเกณฑ์ --</option><option value="ดีมาก">ดีมาก</option><option value="ผ่านมาตรฐาน">ผ่านมาตรฐาน</option><option value="ต้องปรับปรุง">ต้องปรับปรุง</option></select>
+                            </div>
+                            <div class="rating-item">
+                                <label class="rating-label" for="signage">ป้ายสื่อสาร (ตามอัตลักษณ์ฯ)</label>
+                                <select id="signage" name="signage" class="form-select" required><option value="" disabled selected>-- เลือกเกณฑ์ --</option><option value="ดีมาก">ดีมาก</option><option value="ผ่านมาตรฐาน">ผ่านมาตรฐาน</option><option value="ต้องปรับปรุง">ต้องปรับปรุง</option></select>
+                            </div>
+                            <div class="rating-item">
+                                <label class="rating-label" for="equipment">อุปกรณ์กีฬาและการจัดเก็บ</label>
+                                <select id="equipment" name="equipment" class="form-select" required><option value="" disabled selected>-- เลือกเกณฑ์ --</option><option value="ดีมาก">ดีมาก</option><option value="ผ่านมาตรฐาน">ผ่านมาตรฐาน</option><option value="ต้องปรับปรุง">ต้องปรับปรุง</option></select>
+                            </div>
+                            <div class="rating-item">
+                                <label class="rating-label" for="firstAid">ชุดปฐมพยาบาลเบื้องต้น (First Aid)</label>
+                                <select id="firstAid" name="firstAid" class="form-select" required><option value="" disabled selected>-- เลือกเกณฑ์ --</option><option value="ดีมาก">ดีมาก</option><option value="ผ่านมาตรฐาน">ผ่านมาตรฐาน</option><option value="ต้องปรับปรุง">ต้องปรับปรุง</option></select>
+                            </div>
+                            <div class="rating-item">
+                                <label class="rating-label" for="cleanliness">ความสะอาดของพื้นที่โดยรวม</label>
+                                <select id="cleanliness" name="cleanliness" class="form-select" required><option value="" disabled selected>-- เลือกเกณฑ์ --</option><option value="ดีมาก">ดีมาก</option><option value="ผ่านมาตรฐาน">ผ่านมาตรฐาน</option><option value="ต้องปรับปรุง">ต้องปรับปรุง</option></select>
+                            </div>
+                            <div class="rating-item">
+                                <label class="rating-label" for="maintenance">การดูแลความสะอาดอย่างสม่ำเสมอ</label>
+                                <select id="maintenance" name="maintenance" class="form-select" required><option value="" disabled selected>-- เลือกเกณฑ์ --</option><option value="ดีมาก">ดีมาก</option><option value="ผ่านมาตรฐาน">ผ่านมาตรฐาน</option><option value="ต้องปรับปรุง">ต้องปรับปรุง</option></select>
+                            </div>
+                            <div class="rating-item">
+                                <label class="rating-label" for="trashBin">จุดวางถังขยะ</label>
+                                <select id="trashBin" name="trashBin" class="form-select" required><option value="" disabled selected>-- เลือกเกณฑ์ --</option><option value="ดีมาก">ดีมาก</option><option value="ผ่านมาตรฐาน">ผ่านมาตรฐาน</option><option value="ต้องปรับปรุง">ต้องปรับปรุง</option></select>
+                            </div>
+                            <div class="rating-item">
+                                <label class="rating-label" for="landscape">การจัดตกแต่งภูมิทัศน์</label>
+                                <select id="landscape" name="landscape" class="form-select" required><option value="" disabled selected>-- เลือกเกณฑ์ --</option><option value="ดีมาก">ดีมาก</option><option value="ผ่านมาตรฐาน">ผ่านมาตรฐาน</option><option value="ต้องปรับปรุง">ต้องปรับปรุง</option></select>
+                            </div>
+                            <div class="rating-item">
+                                <label class="rating-label" for="seating">ที่นั่งพักสำหรับผู้ใช้บริการ</label>
+                                <select id="seating" name="seating" class="form-select" required><option value="" disabled selected>-- เลือกเกณฑ์ --</option><option value="ดีมาก">ดีมาก</option><option value="ผ่านมาตรฐาน">ผ่านมาตรฐาน</option><option value="ต้องปรับปรุง">ต้องปรับปรุง</option></select>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="section-management" class="form-section">
+                    <div class="section-head">
+                        <div class="section-title">
+                            <span class="section-index">3</span>
+                            <div>
+                                <h2>ด้านการบริหารจัดการ</h2>
+                                <p>บันทึกสถานะการดำเนินงานด้านระบบบริหารและการมีส่วนร่วม</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section-body">
+                        <div class="field-grid compact">
+                            <div class="rating-item">
+                                <label class="rating-label" for="committee">การจัดตั้งคณะกรรมการบริหารจัดการลานกีฬา</label>
+                                <select id="committee" name="committee" class="form-select" required><option value="" disabled selected>-- ระบุสถานะ --</option><option value="มีการดำเนินการ">มีการดำเนินการ</option><option value="ยังไม่มีการดำเนินการ">ยังไม่มีการดำเนินการ</option></select>
+                            </div>
+                            <div class="rating-item">
+                                <label class="rating-label" for="prChannel">การประชาสัมพันธ์ช่องทางแสดงความคิดเห็น</label>
+                                <select id="prChannel" name="prChannel" class="form-select" required><option value="" disabled selected>-- ระบุสถานะ --</option><option value="มีการดำเนินการ">มีการดำเนินการ</option><option value="ยังไม่มีการดำเนินการ">ยังไม่มีการดำเนินการ</option></select>
+                            </div>
+                            <div class="rating-item">
+                                <label class="rating-label" for="dailyReport">การจัดเก็บรายงานผู้ใช้บริการประจำวัน</label>
+                                <select id="dailyReport" name="dailyReport" class="form-select" required><option value="" disabled selected>-- ระบุสถานะ --</option><option value="มีการดำเนินการ">มีการดำเนินการ</option><option value="ยังไม่มีการดำเนินการ">ยังไม่มีการดำเนินการ</option></select>
+                            </div>
+                            <div class="rating-item">
+                                <label class="rating-label" for="monthlyCheck">การตรวจสอบสภาพพื้นที่และอุปกรณ์ประจำเดือน</label>
+                                <select id="monthlyCheck" name="monthlyCheck" class="form-select" required><option value="" disabled selected>-- ระบุสถานะ --</option><option value="มีการดำเนินการ">มีการดำเนินการ</option><option value="ยังไม่มีการดำเนินการ">ยังไม่มีการดำเนินการ</option></select>
+                            </div>
+                            <div class="rating-item">
+                                <label class="rating-label" for="network">ภาคีเครือข่ายความร่วมมือพัฒนาลานกีฬา</label>
+                                <select id="network" name="network" class="form-select" required><option value="" disabled selected>-- ระบุสถานะ --</option><option value="มีการดำเนินการ">มีการดำเนินการ</option><option value="ยังไม่มีการดำเนินการ">ยังไม่มีการดำเนินการ</option></select>
+                            </div>
+                            <div class="rating-item">
+                                <label class="rating-label" for="funding">การแสวงหาแหล่งทุนในการพัฒนาปรับปรุง</label>
+                                <select id="funding" name="funding" class="form-select" required><option value="" disabled selected>-- ระบุสถานะ --</option><option value="มีการดำเนินการ">มีการดำเนินการ</option><option value="ยังไม่มีการดำเนินการ">ยังไม่มีการดำเนินการ</option></select>
+                            </div>
+                            <div class="rating-item">
+                                <label class="rating-label" for="volunteerTrain">การส่งเสริมความรู้อาสาสมัคร (อบรม/สัมมนา)</label>
+                                <select id="volunteerTrain" name="volunteerTrain" class="form-select" required><option value="" disabled selected>-- ระบุสถานะ --</option><option value="มีการดำเนินการ">มีการดำเนินการ</option><option value="ยังไม่มีการดำเนินการ">ยังไม่มีการดำเนินการ</option></select>
+                            </div>
+                            <div class="rating-item">
+                                <label class="rating-label" for="committeeTrain">การส่งเสริมความรู้คณะกรรมการ (อบรม/สัมมนา)</label>
+                                <select id="committeeTrain" name="committeeTrain" class="form-select" required><option value="" disabled selected>-- ระบุสถานะ --</option><option value="มีการดำเนินการ">มีการดำเนินการ</option><option value="ยังไม่มีการดำเนินการ">ยังไม่มีการดำเนินการ</option></select>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="section-stats" class="form-section">
+                    <div class="section-head">
+                        <div class="section-title">
+                            <span class="section-index">4</span>
+                            <div>
+                                <h2>สถิติการใช้งานและกิจกรรม</h2>
+                                <p>ใส่ตัวเลขรวมของรอบการประเมินนี้</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section-body">
+                        <div class="field-grid">
+                            <div class="field">
+                                <label class="form-label" for="userCount">จำนวนผู้เข้าใช้งาน</label>
+                                <div class="input-with-unit">
+                                    <input id="userCount" type="number" name="userCount" class="form-input" placeholder="เช่น 150" min="0" required>
+                                    <span class="unit">คน</span>
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label class="form-label" for="activityCount">จำนวนการจัดกิจกรรม/การแข่งขัน</label>
+                                <div class="input-with-unit">
+                                    <input id="activityCount" type="number" name="activityCount" class="form-input" placeholder="เช่น 5" min="0" required>
+                                    <span class="unit">ครั้ง</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <div id="alertMessage" class="alert-box hidden" role="alert"></div>
+
+                <div class="submit-area">
+                    <div class="submit-note">
+                        <strong>ตรวจสอบข้อมูลก่อนบันทึก</strong>
+                        ระบบจะส่งข้อมูลเข้าสู่ Google Sheets ที่ตั้งค่าไว้
+                    </div>
+                    <button type="submit" id="submitBtn" class="submit-btn">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                        บันทึกข้อมูล
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwiZSiOEgM9cY431aZ3P5pBY75E-O1M9XN2NdlHXR7n_wXb2pNsUoMWO_gt8sDBz9d-/exec";
+        const SHEET_ID = "1Hz3JOpHzaBHafWfBE5ycQNRIJnPgup41o-jMxXnR9Fg";
+        const ASSESSOR_SHEET_CANDIDATES = ['ชื่อกรรมการ', 'กรรมการผู้ประเมิน', 'รายชื่อกรรมการ', 'รายชื่อผู้ประเมิน', 'Sheet1'];
+
+        const form = document.getElementById('sportsForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const alertBox = document.getElementById('alertMessage');
+        const progressText = document.getElementById('progressText');
+        const progressBar = document.getElementById('progressBar');
+        const dataStatus = document.getElementById('dataStatus');
+        const navLinks = [...document.querySelectorAll('.form-nav a')];
+
+        const zoneSelect = document.getElementById('zoneSelect');
+        const districtSelect = document.getElementById('districtSelect');
+        const nameSelect = document.getElementById('nameSelect');
+        const assessorSelect = document.getElementById('assessorSelect');
+        const positionInput = document.getElementById('positionInput');
+        const departmentInput = document.getElementById('departmentInput');
+        const divisionInput = document.getElementById('divisionInput');
+        const phoneInput = document.getElementById('phoneInput');
+
+        let allData = [];
+
+        const sheetFieldMap = {
+            zone: 'โซน',
+            district: 'เขต',
+            name: 'ชื่อลาน',
+            assessorName: 'ชื่อกรรมการ',
+            assessorPosition: 'ตำแหน่ง',
+            assessorDepartment: 'หน่วยงาน',
+            assessorDivision: 'กลุ่มงาน / ฝ่าย',
+            assessorPhone: 'เบอร์โทรศัพท์',
+            type: 'ประเภทลานกีฬา',
+            fieldCondition: 'พื้นสนาม/เส้นสนาม',
+            lighting: 'ระบบไฟฟ้าส่องสว่าง',
+            signage: 'ป้ายสื่อสาร (ออกแบบตามอัตลักษณ์ระบบการบริหารจัดการ)',
+            equipment: 'อุปกรณ์กีฬาและการจัดเก็บ',
+            firstAid: 'ชุดปฐมพยาบาลเบื้องต้น (First Aid Kit)',
+            cleanliness: 'ความสะอาดของพื้นที่ ดูแลความสะอาดอย่างสม่ำเสมอ',
+            maintenance: 'การดูแลความสะอาดอย่างสม่ำเสมอ',
+            trashBin: 'ถังขยะ',
+            landscape: 'จัดตกแต่งภูมิทัศน์อย่างเหมาะสม',
+            seating: 'ที่นั่งพัก',
+            committee: 'การจัดตั้งคณะกรรมการบริหารจัดการลานกีฬา',
+            prChannel: 'การประชาสัมพันธ์ช่องทางแสดงความคิดเห็น',
+            dailyReport: 'การจัดเก็บรายงานผู้ใช้บริการประจำวัน',
+            monthlyCheck: 'การตรวจสอบสภาพพื้นที่และอุปกรณ์ประจำเดือน',
+            network: 'ภาคีเครือข่ายความร่วมมือพัฒนาลานกีฬา',
+            funding: 'การแสวงหาแหล่งทุนในการพัฒนาปรับปรุง',
+            volunteerTrain: 'การส่งเสริมความรู้อาสาสมัคร (อบรม/สัมมนา)',
+            committeeTrain: 'การส่งเสริมความรู้คณะกรรมการ (อบรม/สัมมนา)',
+            userCount: 'จำนวนผู้เข้าใช้งาน',
+            activityCount: 'จำนวนการจัดกิจกรรม/การแข่งขัน'
+        };
+
+        const setOptions = (select, placeholder, values) => {
+            select.innerHTML = `<option value="" disabled selected>${placeholder}</option>`;
+            values.forEach(value => {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = value;
+                select.appendChild(option);
+            });
+        };
+
+        const updateProgress = () => {
+            const fields = [...form.querySelectorAll('select[required], input[required]')].filter(field => !field.disabled);
+            const completed = fields.filter(field => {
+                if (field.type === 'radio') {
+                    return form.querySelector(`input[name="${field.name}"]:checked`);
+                }
+                return field.value.trim() !== '';
+            });
+            const uniqueNames = [...new Set(fields.map(field => field.name || field.id))];
+            const uniqueCompleted = [...new Set(completed.map(field => field.name || field.id))];
+            const percent = uniqueNames.length ? Math.round((uniqueCompleted.length / uniqueNames.length) * 100) : 0;
+
+            progressText.textContent = `${percent}%`;
+            progressBar.style.width = `${percent}%`;
+        };
+
+        const resetSelect = (select, placeholder) => {
+            select.innerHTML = `<option value="" disabled selected>${placeholder}</option>`;
+            select.disabled = true;
+        };
+
+        const clearAssessorDetails = () => {
+            positionInput.value = '';
+            departmentInput.value = '';
+            divisionInput.value = '';
+            phoneInput.value = '';
+        };
+
+        const setAssessorDetails = row => {
+            positionInput.value = row && row.position ? row.position : 'ไม่พบตำแหน่ง';
+            departmentInput.value = row && row.department ? row.department : 'ไม่พบหน่วยงาน';
+            divisionInput.value = row && row.division ? row.division : 'ไม่พบกลุ่มงาน / ฝ่าย';
+            phoneInput.value = row && row.phone ? row.phone : 'ไม่พบเบอร์โทรศัพท์';
+        };
+
+        const syncSheetFieldInputs = () => {
+            form.querySelectorAll('[data-sheet-field="true"]').forEach(input => input.remove());
+
+            Object.entries(sheetFieldMap).forEach(([sourceName, sheetName]) => {
+                const source = form.elements[sourceName];
+                let value = '';
+
+                if (source instanceof RadioNodeList) {
+                    value = source.value || '';
+                } else if (source) {
+                    value = source.value || '';
+                }
+
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = sheetName;
+                hidden.value = value;
+                hidden.dataset.sheetField = 'true';
+                form.appendChild(hidden);
+            });
+        };
+
+        const normalizeText = value => String(value || '').trim();
+
+        const findColumnIndex = (headers, keywords, fallbackIndex) => {
+            const normalizedHeaders = headers.map(header => normalizeText(header).toLowerCase());
+            const foundIndex = normalizedHeaders.findIndex(header =>
+                keywords.some(keyword => header.includes(keyword.toLowerCase()))
+            );
+            return foundIndex >= 0 ? foundIndex : fallbackIndex;
+        };
+
+        const isLikelyHeader = row => row.some(cell => /โซน|เขต|ลาน|ชื่อ|ตำแหน่ง|หน่วยงาน|กลุ่มงาน|ฝ่าย|เบอร์|โทรศัพท์|position|zone|district|assessor/i.test(normalizeText(cell)));
+
+        const normalizeAssessorRows = rows => {
+            const cleanRows = rows
+                .map(row => row.map(normalizeText))
+                .filter(row => row.some(Boolean));
+
+            if (!cleanRows.length) return [];
+
+            const headerRow = isLikelyHeader(cleanRows[0]) ? cleanRows[0] : [];
+            const dataRows = headerRow.length ? cleanRows.slice(1) : cleanRows;
+            const hasLeadingIndex = !headerRow.length && dataRows.some(row => /^\d+$/.test(row[0]) && row.length >= 6);
+
+            const zoneIndex = headerRow.length ? findColumnIndex(headerRow, ['โซน', 'zone'], hasLeadingIndex ? 1 : 0) : (hasLeadingIndex ? 1 : 0);
+            const districtIndex = headerRow.length ? findColumnIndex(headerRow, ['สำนักงานเขต', 'เขต', 'district'], hasLeadingIndex ? 2 : 1) : (hasLeadingIndex ? 2 : 1);
+            const fieldIndex = headerRow.length ? findColumnIndex(headerRow, ['ชื่อลาน', 'ชื่อลานกีฬา', 'ลานกีฬา', 'สนาม', 'field', 'name'], hasLeadingIndex ? 3 : 2) : (hasLeadingIndex ? 3 : 2);
+            const assessorIndex = headerRow.length ? findColumnIndex(headerRow, ['ชื่อผู้ประเมิน', 'กรรมการ', 'ผู้ประเมิน', 'assessor'], hasLeadingIndex ? 4 : 3) : (hasLeadingIndex ? 4 : 3);
+            const positionIndex = headerRow.length ? findColumnIndex(headerRow, ['ตำแหน่ง', 'position'], hasLeadingIndex ? 5 : 4) : (hasLeadingIndex ? 5 : 4);
+            const departmentIndex = headerRow.length ? findColumnIndex(headerRow, ['หน่วยงาน', 'department'], hasLeadingIndex ? 6 : 5) : (hasLeadingIndex ? 6 : 5);
+            const divisionIndex = headerRow.length ? findColumnIndex(headerRow, ['กลุ่มงาน / ฝ่าย', 'กลุ่มงาน', 'ฝ่าย', 'division'], hasLeadingIndex ? 7 : 6) : (hasLeadingIndex ? 7 : 6);
+            const phoneIndex = headerRow.length ? findColumnIndex(headerRow, ['เบอร์โทรศัพท์', 'โทรศัพท์', 'เบอร์', 'phone', 'tel'], hasLeadingIndex ? 8 : 7) : (hasLeadingIndex ? 8 : 7);
+
+            return dataRows
+                .map(row => ({
+                    zone: row[zoneIndex] || '',
+                    district: row[districtIndex] || '',
+                    field: row[fieldIndex] || '',
+                    assessor: row[assessorIndex] || '',
+                    position: row[positionIndex] || '',
+                    department: row[departmentIndex] || '',
+                    division: row[divisionIndex] || '',
+                    phone: row[phoneIndex] || ''
+                }))
+                .filter(item => item.zone && item.district && item.field && item.assessor);
+        };
+
+        const loadSheetRowsJsonp = sheetName => {
+            const callbackName = `sheetCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+            const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=${encodeURIComponent(`out:json;responseHandler:${callbackName}`)}&sheet=${encodeURIComponent(sheetName)}`;
+
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                const timeout = window.setTimeout(() => {
+                    cleanup();
+                    reject(new Error(`Timeout loading sheet ${sheetName}`));
+                }, 12000);
+
+                const cleanup = () => {
+                    window.clearTimeout(timeout);
+                    delete window[callbackName];
+                    script.remove();
+                };
+
+                window[callbackName] = response => {
+                    try {
+                        const table = response && response.table ? response.table : { cols: [], rows: [] };
+                        const headers = table.cols.map(col => normalizeText(col.label || col.id));
+                        const rows = table.rows.map(row => (row.c || []).map(cell => normalizeText(cell && (cell.f || cell.v))));
+                        cleanup();
+                        resolve([headers, ...rows]);
+                    } catch (error) {
+                        cleanup();
+                        reject(error);
+                    }
+                };
+
+                script.onerror = () => {
+                    cleanup();
+                    reject(new Error(`Cannot load sheet ${sheetName}`));
+                };
+
+                script.src = url;
+                document.head.appendChild(script);
+            });
+        };
+
+        const parseAssessorSheet = async sheetName => normalizeAssessorRows(await loadSheetRowsJsonp(sheetName));
+
+        const loadAssessorData = async () => {
+            dataStatus.textContent = 'กำลังโหลด';
+
+            for (const sheetName of ASSESSOR_SHEET_CANDIDATES) {
+                try {
+                    const rows = await parseAssessorSheet(sheetName);
+                    if (rows.length) {
+                        allData = rows;
+                        const zones = [...new Set(allData.map(row => row.zone).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'th'));
+
+                        setOptions(zoneSelect, '-- เลือกโซนพื้นที่ --', zones);
+                        zoneSelect.disabled = false;
+                        dataStatus.textContent = `พร้อมใช้งาน`;
+                        updateProgress();
+                        return;
+                    }
+                } catch (error) {
+                    console.warn(`Cannot load assessor sheet: ${sheetName}`, error);
+                }
+            }
+
+            dataStatus.textContent = 'โหลดไม่สำเร็จ';
+            setOptions(zoneSelect, '-- ไม่พบข้อมูลรายชื่อกรรมการ --', []);
+            showAlert('ยังไม่พบข้อมูลกรรมการผู้ประเมินในชีต กรุณาตรวจสอบชื่อแท็บ เช่น "ชื่อกรรมการ" หรือ "กรรมการผู้ประเมิน" และตั้งค่าการแชร์ชีตเป็น Anyone with the link can view', 'error');
+        };
+
+        loadAssessorData();
+
+        zoneSelect.addEventListener('change', (e) => {
+            const selectedZone = e.target.value;
+
+            resetSelect(districtSelect, '-- เลือกสำนักงานเขต --');
+            resetSelect(nameSelect, '-- โปรดเลือกเขตก่อน --');
+            resetSelect(assessorSelect, '-- โปรดเลือกลานกีฬาก่อน --');
+            clearAssessorDetails();
+
+            const districts = [...new Set(allData
+                .filter(row => row.zone === selectedZone)
+                .map(row => row.district).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'th'));
+
+            setOptions(districtSelect, '-- เลือกสำนักงานเขต --', districts);
+            districtSelect.disabled = false;
+            updateProgress();
+        });
+
+        districtSelect.addEventListener('change', (e) => {
+            const selectedZone = zoneSelect.value;
+            const selectedDistrict = e.target.value;
+
+            resetSelect(nameSelect, '-- เลือกชื่อลานกีฬา --');
+            resetSelect(assessorSelect, '-- โปรดเลือกลานกีฬาก่อน --');
+            clearAssessorDetails();
+
+            const fields = [...new Set(allData
+                .filter(row => row.zone === selectedZone && row.district === selectedDistrict)
+                .map(row => row.field).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'th'));
+
+            setOptions(nameSelect, '-- เลือกชื่อลานกีฬา --', fields);
+            nameSelect.disabled = false;
+            updateProgress();
+        });
+
+        nameSelect.addEventListener('change', (e) => {
+            const selectedZone = zoneSelect.value;
+            const selectedDistrict = districtSelect.value;
+            const selectedField = e.target.value;
+
+            clearAssessorDetails();
+            const assessors = [...new Set(allData
+                .filter(row => row.zone === selectedZone && row.district === selectedDistrict && row.field === selectedField)
+                .map(row => row.assessor).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'th'));
+
+            setOptions(assessorSelect, '-- เลือกชื่อผู้ประเมิน --', assessors.length ? assessors : ['ไม่พบรายชื่อในระบบ']);
+            assessorSelect.disabled = false;
+            updateProgress();
+        });
+
+        assessorSelect.addEventListener('change', (e) => {
+            const selectedZone = zoneSelect.value;
+            const selectedDistrict = districtSelect.value;
+            const selectedField = nameSelect.value;
+            const selectedAssessor = e.target.value;
+
+            const foundRow = allData.find(row =>
+                row.zone === selectedZone &&
+                row.district === selectedDistrict &&
+                row.field === selectedField &&
+                row.assessor === selectedAssessor
+            );
+
+            setAssessorDetails(foundRow);
+            updateProgress();
+        });
+
+        form.addEventListener('input', updateProgress);
+        form.addEventListener('change', updateProgress);
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                navLinks.forEach(item => item.classList.remove('active'));
+                link.classList.add('active');
+            });
+        });
+
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+
+            if(!GOOGLE_APPS_SCRIPT_URL) {
+                showSaveAlert('error', 'ยังไม่ได้ตั้งค่า Apps Script', 'กรุณาใส่ลิงก์ Google Apps Script ในซอร์สโค้ดก่อนใช้งานจริง');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<svg class="animate-spin" width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle opacity=".25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path opacity=".75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>กำลังบันทึก...`;
+            alertBox.classList.add('hidden');
+            syncSheetFieldInputs();
+
+            fetch(GOOGLE_APPS_SCRIPT_URL, {
+                method: 'POST',
+                body: new FormData(form)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    showSaveAlert('success', 'บันทึกข้อมูลสำเร็จ', 'ระบบได้ส่งข้อมูลไปยัง Google Sheets เรียบร้อยแล้ว');
+                    form.reset();
+                    resetSelect(districtSelect, '-- โปรดเลือกโซนก่อน --');
+                    resetSelect(nameSelect, '-- โปรดเลือกเขตก่อน --');
+                    resetSelect(assessorSelect, '-- โปรดเลือกลานกีฬาก่อน --');
+                    clearAssessorDetails();
+                    updateProgress();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    showSaveAlert('error', 'บันทึกข้อมูลไม่สำเร็จ', data.message ? `เกิดข้อผิดพลาด: ${data.message}` : 'ระบบไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง');
+                }
+            })
+            .catch(() => {
+                showSaveAlert('error', 'เชื่อมต่อไม่สำเร็จ', 'เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง');
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>บันทึกข้อมูล`;
+            });
+        });
+
+        function showAlert(message, type) {
+            const icon = type === 'success'
+                ? `<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`
+                : `<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+
+            alertBox.innerHTML = icon + `<span>${message}</span>`;
+            alertBox.className = `alert-box ${type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'}`;
+        }
+
+        function showSaveAlert(type, title, message) {
+            showAlert(message, type);
+
+            if (window.Swal) {
+                Swal.fire({
+                    icon: type,
+                    title,
+                    text: message,
+                    confirmButtonText: 'ตกลง',
+                    confirmButtonColor: type === 'success' ? '#059669' : '#e11d48',
+                    background: '#ffffff',
+                    color: '#0f172a'
+                });
+            }
+        }
+
+        updateProgress();
+    </script>
+</body>
+</html>

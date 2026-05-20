@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แดชบอร์ดสรุปมาตรฐานลานกีฬา</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --ink: #0f172a;
+            --muted: #64748b;
+            --line: #dbe5ef;
+            --surface: #ffffff;
+            --soft: #f6f8fb;
+            --blue: #2563eb;
+            --blue-dark: #1d4ed8;
+            --green: #059669;
+            --amber: #d97706;
+            --red: #e11d48;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Sarabun', 'Inter', sans-serif;
+            color: var(--ink);
+            background:
+                linear-gradient(135deg, rgba(37, 99, 235, 0.08), transparent 32rem),
+                linear-gradient(225deg, rgba(5, 150, 105, 0.08), transparent 34rem),
+                #f6f8fb;
+        }
+
+        button,
+        input,
+        select {
+            font: inherit;
+        }
+
+        .app-shell {
+            width: min(1280px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 20px 0 44px;
+        }
+
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            min-height: 68px;
+            margin: 0 -16px 22px;
+            padding: 10px 16px;
+            border-bottom: 1px solid rgba(219, 229, 239, 0.9);
+            background: rgba(246, 248, 251, 0.86);
+            backdrop-filter: blur(14px);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        .brand-mark {
+            display: grid;
+            width: 42px;
+            height: 42px;
+            place-items: center;
+            border-radius: 8px;
+            background: #0f172a;
+            color: #ffffff;
+            box-shadow: 0 14px 28px rgba(15, 23, 42, 0.16);
+        }
+
+        .brand-title {
+            margin: 0;
+            color: #0f172a;
+            font-size: 1rem;
+            font-weight: 800;
+            line-height: 1.25;
+        }
+
+        .brand-subtitle {
+            margin: 2px 0 0;
+            color: var(--muted);
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-link,
+        .primary-link,
+        .ghost-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 42px;
+            padding: 0 14px;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            font-size: 0.92rem;
+            font-weight: 800;
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+        }
+
+        .nav-link {
+            background: #eff6ff;
+            color: var(--blue-dark);
+        }
+
+        .primary-link {
+            background: var(--blue);
+            color: #ffffff;
+            box-shadow: 0 14px 24px rgba(37, 99, 235, 0.24);
+        }
+
+        .ghost-button {
+            background: #ffffff;
+            color: #334155;
+            border-color: var(--line);
+        }
+
+        .nav-link:hover,
+        .primary-link:hover,
+        .ghost-button:hover {
+            transform: translateY(-1px);
+        }
+
+        .primary-link:hover {
+            background: var(--blue-dark);
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 360px;
+            gap: 22px;
+            margin-bottom: 22px;
+        }
+
+        .overview-panel,
+        .control-panel,
+        .card {
+            border: 1px solid rgba(219, 229, 239, 0.96);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.94);
+            box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
+        }
+
+        .overview-panel {
+            overflow: hidden;
+            position: relative;
+            min-height: 290px;
+            padding: 28px;
+            background:
+                linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.88)),
+                url("https://images.unsplash.com/photo-1526232761682-d26e03ac148e?auto=format&fit=crop&w=1400&q=80") center/cover;
+            color: #ffffff;
+        }
+
+        .overview-panel::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: linear-gradient(90deg, transparent, rgba(15, 23, 42, 0.36));
+        }
+
+        .overview-content {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            min-height: 236px;
+            align-content: space-between;
+            gap: 24px;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #bfdbfe;
+            font-size: 0.92rem;
+            font-weight: 800;
+        }
+
+        .status-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 999px;
+            background: #34d399;
+            box-shadow: 0 0 0 6px rgba(52, 211, 153, 0.14);
+        }
+
+        .overview-panel h1 {
+            max-width: 820px;
+            margin: 12px 0 0;
+            color: #ffffff;
+            font-size: clamp(2rem, 4vw, 3.75rem);
+            line-height: 1.05;
+            font-weight: 800;
+            letter-spacing: 0;
+        }
+
+        .overview-panel p {
+            max-width: 720px;
+            margin: 14px 0 0;
+            color: #dbeafe;
+            font-size: 1.02rem;
+            line-height: 1.75;
+        }
+
+        .overview-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .meta-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 36px;
+            padding: 0 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.36);
+            color: #e2e8f0;
+            font-size: 0.88rem;
+            font-weight: 700;
+            backdrop-filter: blur(12px);
+        }
+
+        .control-panel {
+            display: grid;
+            gap: 16px;
+            align-content: start;
+            padding: 20px;
+        }
+
+        .panel-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin: 0;
+            color: #0f172a;
+            font-size: 1rem;
+            font-weight: 800;
+        }
+
+        .field {
+            display: grid;
+            gap: 7px;
+        }
+
+        .field label {
+            color: #334155;
+            font-size: 0.88rem;
+            font-weight: 800;
+        }
+
+        .field select,
+        .field input {
+            width: 100%;
+            min-height: 44px;
+            padding: 0 12px;
+            border: 1px solid #cfd9e6;
+            border-radius: 7px;
+            background: #ffffff;
+            color: #0f172a;
+            outline: none;
+            transition: border-color 160ms ease, box-shadow 160ms ease;
+        }
+
+        .field select:focus,
+        .field input:focus {
+            border-color: var(--blue);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        }
+
+        .sync-state {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 12px;
+            border-radius: 8px;
+            background: #f8fafc;
+            color: #475569;
+            font-size: 0.86rem;
+            font-weight: 700;
+        }
+
+        .sync-state strong {
+            color: #0f172a;
+            font-size: 0.95rem;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .kpi-card {
+            display: grid;
+            gap: 14px;
+            min-height: 142px;
+            padding: 18px;
+            border-left: 4px solid var(--blue);
+        }
+
+        .kpi-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .kpi-label {
+            margin: 0;
+            color: #64748b;
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0;
+        }
+
+        .kpi-value {
+            margin: 6px 0 0;
+            color: #0f172a;
+            font-family: 'Inter', sans-serif;
+            font-size: 2.35rem;
+            line-height: 1;
+            font-weight: 800;
+        }
+
+        .kpi-icon {
+            display: grid;
+            flex: 0 0 auto;
+            width: 38px;
+            height: 38px;
+            place-items: center;
+            border-radius: 8px;
+            background: #eff6ff;
+            color: var(--blue);
+        }
+
+        .kpi-foot {
+            color: #64748b;
+            font-size: 0.84rem;
+            font-weight: 700;
+        }
+
+        .kpi-card.green {
+            border-left-color: var(--green);
+        }
+
+        .kpi-card.green .kpi-icon,
+        .kpi-card.green .kpi-value {
+            color: var(--green);
+        }
+
+        .kpi-card.green .kpi-icon {
+            background: #ecfdf5;
+        }
+
+        .kpi-card.amber {
+            border-left-color: var(--amber);
+        }
+
+        .kpi-card.amber .kpi-icon,
+        .kpi-card.amber .kpi-value {
+            color: var(--amber);
+        }
+
+        .kpi-card.amber .kpi-icon {
+            background: #fffbeb;
+        }
+
+        .kpi-card.red {
+            border-left-color: var(--red);
+        }
+
+        .kpi-card.red .kpi-icon,
+        .kpi-card.red .kpi-value {
+            color: var(--red);
+        }
+
+        .kpi-card.red .kpi-icon {
+            background: #fff1f2;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: minmax(280px, 0.82fr) minmax(0, 1.18fr);
+            gap: 18px;
+            margin-bottom: 18px;
+        }
+
+        .card {
+            overflow: hidden;
+        }
+
+        .card-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 18px 20px;
+            border-bottom: 1px solid #edf2f7;
+            background: linear-gradient(180deg, #ffffff, #f8fafc);
+        }
+
+        .card-head h2 {
+            margin: 0;
+            color: #0f172a;
+            font-size: 1.02rem;
+            font-weight: 800;
+        }
+
+        .card-head p {
+            margin: 4px 0 0;
+            color: #64748b;
+            font-size: 0.86rem;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
+        .card-body {
+            padding: 18px 20px 20px;
+        }
+
+        .chart-box {
+            position: relative;
+            width: 100%;
+            height: 300px;
+        }
+
+        .chart-box.short {
+            height: 250px;
+        }
+
+        .table-tools {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-box {
+            min-width: min(320px, 100%);
+            flex: 1;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            white-space: nowrap;
+            font-size: 0.9rem;
+        }
+
+        thead {
+            color: #64748b;
+            background: #f8fafc;
+            font-size: 0.78rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        th,
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #edf2f7;
+            text-align: left;
+        }
+
+        th.center,
+        td.center {
+            text-align: center;
+        }
+
+        th.right,
+        td.right {
+            text-align: right;
+        }
+
+        tbody tr {
+            background: #ffffff;
+            transition: background-color 140ms ease;
+        }
+
+        tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .place-name {
+            color: #0f172a;
+            font-weight: 800;
+        }
+
+        .place-meta {
+            margin-top: 2px;
+            color: #64748b;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .score-chip,
+        .status-chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 28px;
+            padding: 0 9px;
+            border-radius: 999px;
+            font-family: 'Inter', 'Sarabun', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 800;
+        }
+
+        .score-chip {
+            min-width: 42px;
+            background: #f1f5f9;
+            color: #334155;
+        }
+
+        .status-chip.excellent {
+            background: #ecfdf5;
+            color: #047857;
+        }
+
+        .status-chip.pass {
+            background: #fffbeb;
+            color: #b45309;
+        }
+
+        .status-chip.fail {
+            background: #fff1f2;
+            color: #be123c;
+        }
+
+        .empty-state {
+            display: none;
+            padding: 34px 20px;
+            color: #64748b;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .toast {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            z-index: 40;
+            display: none;
+            max-width: min(420px, calc(100% - 36px));
+            padding: 14px 16px;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            background: #eff6ff;
+            color: #1e3a8a;
+            font-size: 0.9rem;
+            font-weight: 700;
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
+        }
+
+        .toast.show {
+            display: block;
+        }
+
+        @media (max-width: 1040px) {
+            .hero,
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .kpi-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 700px) {
+            .app-shell {
+                width: min(100% - 20px, 1280px);
+                padding-top: 10px;
+            }
+
+            .topbar {
+                position: static;
+                align-items: stretch;
+                flex-direction: column;
+                margin-bottom: 16px;
+            }
+
+            .top-actions {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .brand-subtitle {
+                display: none;
+            }
+
+            .overview-panel {
+                min-height: 330px;
+                padding: 22px;
+            }
+
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .card-head {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .chart-box,
+            .chart-box.short {
+                height: 260px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-shell">
+        <header class="topbar">
+            <div class="brand">
+                <div class="brand-mark" aria-hidden="true">
+                    <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 19V8m5 11V5m5 14v-8m5 8V3"></path></svg>
+                </div>
+                <div>
+                    <p class="brand-title">BMA Sports Field Dashboard</p>
+                    <p class="brand-subtitle">สรุปผลประเมินมาตรฐานลานกีฬา</p>
+                </div>
+            </div>
+            <nav class="top-actions" aria-label="เมนูหลัก">
+                <a href="index.html" class="nav-link">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 19V8m5 11V5m5 14v-8m5 8V3"></path></svg>
+                    Overview
+                </a>
+                <a href="form.html" class="primary-link">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    บันทึกข้อมูล
+                </a>
+            </nav>
+        </header>
+
+        <main>
+            <section class="hero" aria-labelledby="page-title">
+                <div class="overview-panel">
+                    <div class="overview-content">
+                        <div>
+                            <span class="eyebrow"><span class="status-dot"></span><span id="sourceLabel">กำลังเชื่อมต่อข้อมูล</span></span>
+                            <h1 id="page-title">ภาพรวมมาตรฐานลานกีฬา</h1>
+                            <p>ติดตามจำนวนลานกีฬา ระดับผลประเมิน จุดที่ต้องปรับปรุง และสถิติการใช้งานจากข้อมูลที่บันทึกผ่านแบบฟอร์ม</p>
+                        </div>
+                        <div class="overview-meta">
+                            <span class="meta-pill">อัปเดตล่าสุด: <span id="lastUpdate">กำลังโหลด</span></span>
+                            <span class="meta-pill">ข้อมูลในตาราง: <span id="visibleCount">0 รายการ</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <aside class="control-panel" aria-label="ตัวกรองข้อมูล">
+                    <h2 class="panel-title">
+                        ตัวกรองข้อมูล
+                        <button id="refreshBtn" class="ghost-button" type="button" aria-label="โหลดข้อมูลใหม่">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v6h6M20 20v-6h-6M20 9A8 8 0 006.3 5.3L4 10m16 4l-2.3 4.7A8 8 0 014 15"></path></svg>
+                        </button>
+                    </h2>
+                    <div class="field">
+                        <label for="zoneFilter">โซนพื้นที่</label>
+                        <select id="zoneFilter">
+                            <option value="ทั้งหมด">ทุกโซนพื้นที่</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="districtFilter">สำนักงานเขต</label>
+                        <select id="districtFilter">
+                            <option value="ทั้งหมด">ทุกสำนักงานเขต</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="statusFilter">สถานะผลประเมิน</label>
+                        <select id="statusFilter">
+                            <option value="ทั้งหมด">ทุกสถานะ</option>
+                            <option value="excellent">ยอดเยี่ยม</option>
+                            <option value="pass">มาตรฐาน</option>
+                            <option value="fail">ต้องปรับปรุง</option>
+                        </select>
+                    </div>
+                    <div class="sync-state">
+                        <span>สถานะข้อมูล</span>
+                        <strong id="syncState">กำลังโหลด</strong>
+                    </div>
+                </aside>
+            </section>
+
+            <section class="kpi-grid" aria-label="ตัวชี้วัดหลัก">
+                <article class="card kpi-card">
+                    <div class="kpi-head">
+                        <div>
+                            <p class="kpi-label">ลานกีฬาทั้งหมด</p>
+                            <p class="kpi-value" id="kpiTotal">0</p>
+                        </div>
+                        <div class="kpi-icon" aria-hidden="true"><svg width="21" height="21" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.7 16.7L13.4 21a2 2 0 01-2.8 0l-4.3-4.3a8 8 0 1111.4 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></div>
+                    </div>
+                    <div class="kpi-foot">จำนวนรายการที่ผ่านตัวกรอง</div>
+                </article>
+                <article class="card kpi-card green">
+                    <div class="kpi-head">
+                        <div>
+                            <p class="kpi-label">ยอดเยี่ยม 85-100%</p>
+                            <p class="kpi-value" id="kpiExcellent">0</p>
+                        </div>
+                        <div class="kpi-icon" aria-hidden="true"><svg width="21" height="21" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                    </div>
+                    <div class="kpi-foot">พร้อมเป็นต้นแบบ</div>
+                </article>
+                <article class="card kpi-card amber">
+                    <div class="kpi-head">
+                        <div>
+                            <p class="kpi-label">มาตรฐาน 60-84%</p>
+                            <p class="kpi-value" id="kpiPass">0</p>
+                        </div>
+                        <div class="kpi-icon" aria-hidden="true"><svg width="21" height="21" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                    </div>
+                    <div class="kpi-foot">ผ่านเกณฑ์ติดตามต่อ</div>
+                </article>
+                <article class="card kpi-card red">
+                    <div class="kpi-head">
+                        <div>
+                            <p class="kpi-label">ต้องปรับปรุง ต่ำกว่า 60%</p>
+                            <p class="kpi-value" id="kpiFail">0</p>
+                        </div>
+                        <div class="kpi-icon" aria-hidden="true"><svg width="21" height="21" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.3 4.3L2.8 17.2A2 2 0 004.5 20h15a2 2 0 001.7-2.8L13.7 4.3a2 2 0 00-3.4 0z"></path></svg></div>
+                    </div>
+                    <div class="kpi-foot">ควรเร่งวางแผนแก้ไข</div>
+                </article>
+            </section>
+
+            <section class="dashboard-grid">
+                <article class="card">
+                    <div class="card-head">
+                        <div>
+                            <h2>คะแนนเฉลี่ยรายด้าน</h2>
+                            <p>แสดงจุดแข็งและจุดที่ควรปรับปรุงจากรายการประเมินหลัก</p>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-box short">
+                            <canvas id="criteriaChart"></canvas>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="card">
+                    <div class="card-head">
+                        <div>
+                            <h2>ภาพรวมตามพื้นที่</h2>
+                            <p>เปรียบเทียบจำนวนลานกีฬาและคะแนนเฉลี่ยตามโซนหรือสำนักงานเขต</p>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-box">
+                            <canvas id="areaChart"></canvas>
+                        </div>
+                    </div>
+                </article>
+            </section>
+
+            <section class="card">
+                <div class="card-head">
+                    <div>
+                        <h2>รายละเอียดผลการประเมิน</h2>
+                        <p>ค้นหา ตรวจสอบสถานะ และส่งออกข้อมูลที่กำลังแสดงอยู่</p>
+                    </div>
+                    <div class="table-tools">
+                        <div class="field search-box">
+                            <label for="searchInput">ค้นหา</label>
+                            <input id="searchInput" type="search" placeholder="ชื่อลานกีฬา เขต หรือโซน">
+                        </div>
+                        <button id="exportBtn" type="button" class="ghost-button">
+                            <svg width="17" height="17" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Export CSV
+                        </button>
+                    </div>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>พื้นที่</th>
+                                <th>ชื่อลานกีฬา</th>
+                                <th class="center">กายภาพ</th>
+                                <th class="center">บริหาร</th>
+                                <th class="center">ผู้ใช้</th>
+                                <th class="center">คะแนนรวม</th>
+                                <th class="right">สถานะ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                    <div id="emptyState" class="empty-state">ไม่พบข้อมูลตามตัวกรองที่เลือก</div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="toast" class="toast" role="status"></div>
+
+    <script>
+        const SHEET_ID = '1Hz3JOpHzaBHafWfBE5ycQNRIJnPgup41o-jMxXnR9Fg';
+        const RESPONSE_SHEET_CANDIDATES = ['ข้อมูล', 'Form Responses 1', 'คำตอบแบบฟอร์ม 1', 'Sheet1'];
+
+        const scoreMap = {
+            'ดีมาก': 10,
+            'ผ่านมาตรฐาน': 7,
+            'ต้องปรับปรุง': 3,
+            'มีการดำเนินการ': 10,
+            'ยังไม่มีการดำเนินการ': 0
+        };
+
+        const physicalFields = ['fieldCondition', 'lighting', 'signage', 'equipment', 'firstAid', 'cleanliness', 'maintenance', 'trashBin', 'landscape', 'seating'];
+        const managementFields = ['committee', 'prChannel', 'dailyReport', 'monthlyCheck', 'network', 'funding', 'volunteerTrain', 'committeeTrain'];
+        const allCriteriaFields = [...physicalFields, ...managementFields];
+
+        const fieldAliases = {
+            zone: ['zone', 'โซน', 'โซนพื้นที่'],
+            district: ['district', 'สำนักงานเขต', 'เขต'],
+            name: ['name', 'ชื่อลาน', 'ชื่อลานกีฬา', 'ลานกีฬา'],
+            type: ['type', 'ประเภทลานกีฬา'],
+            userCount: ['userCount', 'จำนวนผู้เข้าใช้งาน', 'ผู้เข้าใช้งาน'],
+            activityCount: ['activityCount', 'จำนวนการจัดกิจกรรม', 'จำนวนการจัดกิจกรรม/การแข่งขัน'],
+            fieldCondition: ['fieldCondition', 'พื้นสนาม/เส้นสนาม', 'พื้นสนามและเส้นสนาม'],
+            lighting: ['lighting', 'ระบบไฟฟ้าส่องสว่าง', 'ไฟส่องสว่าง'],
+            signage: ['signage', 'ป้ายสื่อสาร'],
+            equipment: ['equipment', 'อุปกรณ์กีฬาและการจัดเก็บ'],
+            firstAid: ['firstAid', 'ชุดปฐมพยาบาลเบื้องต้น', 'First Aid Kit', 'ปฐมพยาบาล'],
+            cleanliness: ['cleanliness', 'ความสะอาดของพื้นที่ ดูแลความสะอาดอย่างสม่ำเสมอ', 'ความสะอาดของพื้นที่โดยรวม', 'ความสะอาด'],
+            maintenance: ['maintenance', 'การดูแลความสะอาดอย่างสม่ำเสมอ'],
+            trashBin: ['trashBin', 'ถังขยะ', 'จุดวางถังขยะ'],
+            landscape: ['landscape', 'จัดตกแต่งภูมิทัศน์อย่างเหมาะสม', 'การจัดตกแต่งภูมิทัศน์'],
+            seating: ['seating', 'ที่นั่งพัก', 'ที่นั่งพักสำหรับผู้ใช้บริการ'],
+            committee: ['committee', 'การจัดตั้งคณะกรรมการบริหารจัดการลานกีฬา'],
+            prChannel: ['prChannel', 'การประชาสัมพันธ์ช่องทางแสดงความคิดเห็น'],
+            dailyReport: ['dailyReport', 'การจัดเก็บรายงานผู้ใช้บริการประจำวัน'],
+            monthlyCheck: ['monthlyCheck', 'การตรวจสอบสภาพพื้นที่และอุปกรณ์ประจำเดือน'],
+            network: ['network', 'ภาคีเครือข่ายความร่วมมือพัฒนาลานกีฬา'],
+            funding: ['funding', 'การแสวงหาแหล่งทุนในการพัฒนาปรับปรุง'],
+            volunteerTrain: ['volunteerTrain', 'การส่งเสริมความรู้อาสาสมัคร'],
+            committeeTrain: ['committeeTrain', 'การส่งเสริมความรู้คณะกรรมการ']
+        };
+
+        const fallbackZones = {
+            'กรุงเทพตะวันออก': ['มีนบุรี', 'คันนายาว', 'หนองจอก', 'ลาดกระบัง'],
+            'กรุงเทพเหนือ': ['จตุจักร', 'ดอนเมือง', 'สายไหม'],
+            'กรุงเทพกลาง': ['พระนคร', 'ดุสิต', 'พญาไท'],
+            'กรุงเทพใต้': ['ปทุมวัน', 'บางรัก', 'สาทร'],
+            'กรุงธนเหนือ': ['ธนบุรี', 'คลองสาน'],
+            'กรุงธนใต้': ['ภาษีเจริญ', 'บางแค']
+        };
+
+        let rawData = [];
+        let visibleData = [];
+        let criteriaChart = null;
+        let areaChart = null;
+        let loadedFromSheet = false;
+
+        const el = {
+            sourceLabel: document.getElementById('sourceLabel'),
+            syncState: document.getElementById('syncState'),
+            lastUpdate: document.getElementById('lastUpdate'),
+            visibleCount: document.getElementById('visibleCount'),
+            zoneFilter: document.getElementById('zoneFilter'),
+            districtFilter: document.getElementById('districtFilter'),
+            statusFilter: document.getElementById('statusFilter'),
+            searchInput: document.getElementById('searchInput'),
+            tableBody: document.getElementById('tableBody'),
+            emptyState: document.getElementById('emptyState'),
+            exportBtn: document.getElementById('exportBtn'),
+            refreshBtn: document.getElementById('refreshBtn'),
+            toast: document.getElementById('toast')
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            Chart.defaults.font.family = "'Inter', 'Sarabun', sans-serif";
+            loadDashboardData();
+            [el.districtFilter, el.statusFilter, el.searchInput].forEach(input => {
+                input.addEventListener('input', applyFilters);
+                input.addEventListener('change', applyFilters);
+            });
+            el.zoneFilter.addEventListener('change', () => {
+                rebuildDistrictFilter();
+                applyFilters();
+            });
+            el.exportBtn.addEventListener('click', exportVisibleData);
+            el.refreshBtn.addEventListener('click', loadDashboardData);
+        });
+
+        async function loadDashboardData() {
+            setSyncState('กำลังโหลด', 'กำลังโหลดข้อมูลจาก Google Sheets');
+            loadedFromSheet = false;
+
+            for (const sheetName of RESPONSE_SHEET_CANDIDATES) {
+                try {
+                    const rows = await fetchSheet(sheetName);
+                    const processed = processRows(rows);
+                    if (processed.length) {
+                        rawData = processed;
+                        loadedFromSheet = true;
+                        setSyncState('พร้อมใช้งาน', `เชื่อมต่อชีต ${sheetName}`);
+                        break;
+                    }
+                } catch (error) {
+                    console.warn(`Cannot load sheet: ${sheetName}`, error);
+                }
+            }
+
+            if (!loadedFromSheet) {
+                rawData = generateMockData();
+                setSyncState('ข้อมูลตัวอย่าง', 'ยังไม่พบชีตผลลัพธ์ จึงแสดงข้อมูลตัวอย่าง');
+            }
+
+            populateFilters();
+            applyFilters();
+            el.lastUpdate.textContent = new Date().toLocaleString('th-TH', { hour12: false });
+        }
+
+        function fetchSheet(sheetName) {
+            const callbackName = `dashboardSheetCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+            const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=${encodeURIComponent(`out:json;responseHandler:${callbackName}`)}&sheet=${encodeURIComponent(sheetName)}`;
+
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                const timeout = window.setTimeout(() => {
+                    cleanup();
+                    reject(new Error(`Timeout loading sheet ${sheetName}`));
+                }, 12000);
+
+                const cleanup = () => {
+                    window.clearTimeout(timeout);
+                    delete window[callbackName];
+                    script.remove();
+                };
+
+                window[callbackName] = response => {
+                    try {
+                        const table = response && response.table ? response.table : { cols: [], rows: [] };
+                        let headers = table.cols.map(col => String(col.label || col.id || '').trim());
+                        let rows = table.rows.map(row => (row.c || []).map(cell => String(cell && (cell.f || cell.v) || '').trim()));
+
+                        if (!headers.some(header => /โซน|เขต|ลาน|พื้นสนาม|ไฟฟ้า|ป้าย|อุปกรณ์|ปฐม|ถังขยะ|ที่นั่ง/i.test(header)) && rows.length) {
+                            headers = rows.shift();
+                        }
+
+                        cleanup();
+                        resolve(rows
+                            .filter(row => row.some(Boolean))
+                            .map(row => Object.fromEntries(headers.map((header, index) => [header, row[index] || '']))));
+                    } catch (error) {
+                        cleanup();
+                        reject(error);
+                    }
+                };
+
+                script.onerror = () => {
+                    cleanup();
+                    reject(new Error(`Cannot load sheet ${sheetName}`));
+                };
+
+                script.src = url;
+                document.head.appendChild(script);
+            });
+        }
+
+        function getValue(row, key) {
+            const aliases = fieldAliases[key] || [key];
+            const normalizedEntries = Object.entries(row).map(([rowKey, value]) => [String(rowKey || '').trim(), value]);
+            for (const alias of aliases) {
+                const found = normalizedEntries.find(([rowKey]) => rowKey === alias || rowKey.includes(alias));
+                if (found && found[1] !== undefined && String(found[1]).trim() !== '') return String(found[1]).trim();
+            }
+            return '';
+        }
+
+        function toScore(value) {
+            if (value === undefined || value === null || value === '') return null;
+            const clean = String(value).trim();
+            if (scoreMap[clean] !== undefined) return scoreMap[clean];
+            const number = parseFloat(clean);
+            if (!Number.isNaN(number)) return Math.max(0, Math.min(10, number));
+            return null;
+        }
+
+        function average(values) {
+            const valid = values.filter(value => typeof value === 'number' && !Number.isNaN(value));
+            if (!valid.length) return 0;
+            return valid.reduce((sum, value) => sum + value, 0) / valid.length;
+        }
+
+        function processRows(rows) {
+            return rows
+                .map((row, index) => {
+                    const name = getValue(row, 'name');
+                    const zone = getValue(row, 'zone');
+                    const district = getValue(row, 'district');
+                    if (!name && !zone && !district) return null;
+
+                    const scores = {};
+                    allCriteriaFields.forEach(field => {
+                        scores[field] = toScore(getValue(row, field));
+                    });
+
+                    const physicalAverage = average(physicalFields.map(field => scores[field]));
+                    const managementAverage = average(managementFields.map(field => scores[field]));
+                    const totalScore = Math.round(average([...physicalFields, ...managementFields].map(field => scores[field])) * 10);
+
+                    return {
+                        id: index + 1,
+                        zone: zone || 'ไม่ระบุโซน',
+                        district: district || 'ไม่ระบุเขต',
+                        name: name || 'ไม่ระบุชื่อลานกีฬา',
+                        type: getValue(row, 'type') || '-',
+                        userCount: parseInt(getValue(row, 'userCount'), 10) || 0,
+                        activityCount: parseInt(getValue(row, 'activityCount'), 10) || 0,
+                        scores,
+                        physicalAverage,
+                        managementAverage,
+                        totalScore
+                    };
+                })
+                .filter(Boolean);
+        }
+
+        function generateMockData() {
+            const conditionValues = [10, 7, 3];
+            const data = [];
+            let id = 1;
+            Object.entries(fallbackZones).forEach(([zone, districts]) => {
+                districts.forEach((district, districtIndex) => {
+                    const amount = 2 + (districtIndex % 2);
+                    for (let i = 0; i < amount; i++) {
+                        const scores = {};
+                        allCriteriaFields.forEach((field, fieldIndex) => {
+                            scores[field] = conditionValues[(id + fieldIndex + i) % conditionValues.length];
+                        });
+                        const physicalAverage = average(physicalFields.map(field => scores[field]));
+                        const managementAverage = average(managementFields.map(field => scores[field]));
+                        data.push({
+                            id: id++,
+                            zone,
+                            district,
+                            name: `ลานกีฬา${district} ${i + 1}`,
+                            type: ['ลานกีฬา A', 'ลานกีฬา B', 'ลานกีฬา C'][i % 3],
+                            userCount: 70 + id * 9,
+                            activityCount: 2 + (id % 8),
+                            scores,
+                            physicalAverage,
+                            managementAverage,
+                            totalScore: Math.round(average(allCriteriaFields.map(field => scores[field])) * 10)
+                        });
+                    }
+                });
+            });
+            return data;
+        }
+
+        function setSyncState(state, label) {
+            el.syncState.textContent = state;
+            el.sourceLabel.textContent = label;
+        }
+
+        function populateFilters() {
+            setOptions(el.zoneFilter, 'ทั้งหมด', 'ทุกโซนพื้นที่', unique(rawData.map(item => item.zone)));
+            rebuildDistrictFilter();
+            el.statusFilter.value = 'ทั้งหมด';
+            el.searchInput.value = '';
+        }
+
+        function rebuildDistrictFilter() {
+            const zone = el.zoneFilter.value;
+            const source = zone === 'ทั้งหมด' ? rawData : rawData.filter(item => item.zone === zone);
+            setOptions(el.districtFilter, 'ทั้งหมด', 'ทุกสำนักงานเขต', unique(source.map(item => item.district)));
+        }
+
+        function setOptions(select, defaultValue, defaultText, values) {
+            const current = select.value;
+            select.innerHTML = `<option value="${defaultValue}">${defaultText}</option>`;
+            values.forEach(value => {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = value;
+                select.appendChild(option);
+            });
+            select.value = values.includes(current) ? current : defaultValue;
+        }
+
+        function unique(values) {
+            return [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'th'));
+        }
+
+        function applyFilters() {
+            const zone = el.zoneFilter.value;
+            const district = el.districtFilter.value;
+            const status = el.statusFilter.value;
+            const query = el.searchInput.value.trim().toLowerCase();
+
+            visibleData = rawData.filter(item => {
+                const matchesZone = zone === 'ทั้งหมด' || item.zone === zone;
+                const matchesDistrict = district === 'ทั้งหมด' || item.district === district;
+                const matchesStatus = status === 'ทั้งหมด' || getStatus(item.totalScore).key === status;
+                const searchable = `${item.name} ${item.zone} ${item.district} ${item.type}`.toLowerCase();
+                const matchesQuery = !query || searchable.includes(query);
+                return matchesZone && matchesDistrict && matchesStatus && matchesQuery;
+            });
+
+            updateKPIs(visibleData);
+            updateCharts(visibleData);
+            updateTable(visibleData);
+            el.visibleCount.textContent = `${visibleData.length.toLocaleString('th-TH')} รายการ`;
+        }
+
+        function updateKPIs(data) {
+            animateNumber('kpiTotal', data.length);
+            animateNumber('kpiExcellent', data.filter(item => item.totalScore >= 85).length);
+            animateNumber('kpiPass', data.filter(item => item.totalScore >= 60 && item.totalScore < 85).length);
+            animateNumber('kpiFail', data.filter(item => item.totalScore < 60).length);
+        }
+
+        function animateNumber(id, end) {
+            const node = document.getElementById(id);
+            const start = parseInt(node.textContent.replace(/,/g, ''), 10) || 0;
+            if (start === end) return;
+            const duration = 520;
+            const startedAt = performance.now();
+
+            function step(now) {
+                const progress = Math.min((now - startedAt) / duration, 1);
+                const value = Math.round(start + (end - start) * progress);
+                node.textContent = value.toLocaleString('th-TH');
+                if (progress < 1) requestAnimationFrame(step);
+            }
+
+            requestAnimationFrame(step);
+        }
+
+        function updateCharts(data) {
+            const criteriaLabels = ['พื้นสนาม', 'ไฟส่องสว่าง', 'ป้ายสื่อสาร', 'อุปกรณ์', 'ปฐมพยาบาล', 'ความสะอาด', 'ภูมิทัศน์', 'บริหาร'];
+            const criteriaValues = [
+                avgField(data, 'fieldCondition'),
+                avgField(data, 'lighting'),
+                avgField(data, 'signage'),
+                avgField(data, 'equipment'),
+                avgField(data, 'firstAid'),
+                avgField(data, 'cleanliness'),
+                avgField(data, 'landscape'),
+                average(data.map(item => item.managementAverage))
+            ].map(value => Number(value.toFixed(1)));
+
+            if (criteriaChart) criteriaChart.destroy();
+            criteriaChart = new Chart(document.getElementById('criteriaChart'), {
+                type: 'radar',
+                data: {
+                    labels: criteriaLabels,
+                    datasets: [{
+                        data: criteriaValues,
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.16)',
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#2563eb',
+                        borderWidth: 2,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { r: { min: 0, max: 10, ticks: { stepSize: 2 }, grid: { color: '#e2e8f0' }, pointLabels: { color: '#475569' } } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            const groupKey = el.zoneFilter.value === 'ทั้งหมด' ? 'zone' : 'district';
+            const groups = {};
+            data.forEach(item => {
+                const key = item[groupKey] || 'ไม่ระบุ';
+                if (!groups[key]) groups[key] = { count: 0, score: 0 };
+                groups[key].count += 1;
+                groups[key].score += item.totalScore;
+            });
+
+            const labels = Object.keys(groups).sort((a, b) => a.localeCompare(b, 'th'));
+            if (areaChart) areaChart.destroy();
+            areaChart = new Chart(document.getElementById('areaChart'), {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'จำนวนลานกีฬา',
+                            data: labels.map(label => groups[label].count),
+                            backgroundColor: '#2563eb',
+                            borderRadius: 6,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'คะแนนเฉลี่ย',
+                            data: labels.map(label => Math.round(groups[label].score / groups[label].count)),
+                            type: 'line',
+                            borderColor: '#059669',
+                            backgroundColor: '#059669',
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            tension: 0.32,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#64748b' } },
+                        y: { beginAtZero: true, position: 'left', ticks: { precision: 0 }, grid: { color: '#edf2f7' } },
+                        y1: { beginAtZero: true, max: 100, position: 'right', grid: { drawOnChartArea: false } }
+                    },
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, usePointStyle: true } } }
+                }
+            });
+        }
+
+        function avgField(data, field) {
+            return average(data.map(item => item.scores[field]).filter(value => value !== null));
+        }
+
+        function updateTable(data) {
+            el.tableBody.innerHTML = '';
+            el.emptyState.style.display = data.length ? 'none' : 'block';
+
+            data.forEach(item => {
+                const status = getStatus(item.totalScore);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <div class="place-name">${escapeHtml(item.district)}</div>
+                        <div class="place-meta">${escapeHtml(item.zone)}</div>
+                    </td>
+                    <td>
+                        <div class="place-name">${escapeHtml(item.name)}</div>
+                        <div class="place-meta">${escapeHtml(item.type)}</div>
+                    </td>
+                    <td class="center"><span class="score-chip">${item.physicalAverage.toFixed(1)}</span></td>
+                    <td class="center"><span class="score-chip">${item.managementAverage.toFixed(1)}</span></td>
+                    <td class="center"><span class="score-chip">${item.userCount.toLocaleString('th-TH')}</span></td>
+                    <td class="center"><strong>${item.totalScore}%</strong></td>
+                    <td class="right"><span class="status-chip ${status.key}">${status.label}</span></td>
+                `;
+                el.tableBody.appendChild(tr);
+            });
+        }
+
+        function getStatus(score) {
+            if (score >= 85) return { key: 'excellent', label: 'ยอดเยี่ยม' };
+            if (score >= 60) return { key: 'pass', label: 'มาตรฐาน' };
+            return { key: 'fail', label: 'ต้องปรับปรุง' };
+        }
+
+        function exportVisibleData() {
+            if (!visibleData.length) {
+                showToast('ไม่มีข้อมูลสำหรับส่งออก');
+                return;
+            }
+
+            const rows = visibleData.map(item => ({
+                zone: item.zone,
+                district: item.district,
+                name: item.name,
+                type: item.type,
+                physicalAverage: item.physicalAverage.toFixed(1),
+                managementAverage: item.managementAverage.toFixed(1),
+                userCount: item.userCount,
+                activityCount: item.activityCount,
+                totalScore: item.totalScore,
+                status: getStatus(item.totalScore).label
+            }));
+
+            const csv = Papa.unparse(rows);
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `sports-field-dashboard-${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        function showToast(message) {
+            el.toast.textContent = message;
+            el.toast.classList.add('show');
+            setTimeout(() => el.toast.classList.remove('show'), 2600);
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+    </script>
+</body>
+</html>
