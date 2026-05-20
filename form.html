@@ -877,6 +877,7 @@
         const GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwiZSiOEgM9cY431aZ3P5pBY75E-O1M9XN2NdlHXR7n_wXb2pNsUoMWO_gt8sDBz9d-/exec";
         const SHEET_ID = "1Hz3JOpHzaBHafWfBE5ycQNRIJnPgup41o-jMxXnR9Fg";
         const ASSESSOR_SHEET_CANDIDATES = ['ชื่อกรรมการ', 'กรรมการผู้ประเมิน', 'รายชื่อกรรมการ', 'รายชื่อผู้ประเมิน', 'Sheet1'];
+        const RESPONSE_SHEET_CANDIDATES = ['ข้อมูล', 'Form Responses 1', 'คำตอบแบบฟอร์ม 1', 'Sheet1'];
 
         const form = document.getElementById('sportsForm');
         const submitBtn = document.getElementById('submitBtn');
@@ -896,6 +897,7 @@
         const phoneInput = document.getElementById('phoneInput');
 
         let allData = [];
+        let evaluatedFieldKeys = new Set();
 
         const sheetFieldMap = {
             zone: 'โซน',
@@ -997,6 +999,7 @@
         };
 
         const normalizeText = value => String(value || '').trim();
+        const makeFieldKey = (zone, district, field) => [zone, district, field].map(value => normalizeText(value).toLowerCase()).join('|');
 
         const findColumnIndex = (headers, keywords, fallbackIndex) => {
             const normalizedHeaders = headers.map(header => normalizeText(header).toLowerCase());
@@ -1052,6 +1055,30 @@
                 );
         };
 
+        const normalizeEvaluatedRows = rows => {
+            const cleanRows = rows
+                .map(row => row.map(normalizeText))
+                .filter(row => row.some(Boolean));
+
+            if (!cleanRows.length) return [];
+
+            const headerIndex = cleanRows.findIndex(row => row.some(cell => /โซน|เขต|ชื่อลาน|ลานกีฬา|name|district|zone/i.test(cell)));
+            const headerRow = headerIndex >= 0 ? cleanRows[headerIndex] : [];
+            const dataRows = headerRow.length ? cleanRows.slice(headerIndex + 1) : cleanRows;
+
+            const zoneIndex = headerRow.length ? findColumnIndex(headerRow, ['โซน', 'zone'], -1) : -1;
+            const districtIndex = headerRow.length ? findColumnIndex(headerRow, ['สำนักงานเขต', 'เขต', 'district'], -1) : -1;
+            const fieldIndex = headerRow.length ? findColumnIndex(headerRow, ['ชื่อลาน', 'ชื่อลานกีฬา', 'ลานกีฬา', 'name'], -1) : -1;
+
+            return dataRows
+                .map(row => ({
+                    zone: zoneIndex >= 0 ? row[zoneIndex] : '',
+                    district: districtIndex >= 0 ? row[districtIndex] : '',
+                    field: fieldIndex >= 0 ? row[fieldIndex] : ''
+                }))
+                .filter(item => item.zone && item.district && item.field && item.zone !== 'โซน');
+        };
+
         const loadSheetRowsJsonp = sheetName => {
             const callbackName = `sheetCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
             const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=${encodeURIComponent(`out:json;responseHandler:${callbackName}`)}&headers=1&sheet=${encodeURIComponent(sheetName)}`;
@@ -1093,9 +1120,27 @@
         };
 
         const parseAssessorSheet = async sheetName => normalizeAssessorRows(await loadSheetRowsJsonp(sheetName));
+        const parseResponseSheet = async sheetName => normalizeEvaluatedRows(await loadSheetRowsJsonp(sheetName));
+
+        const loadEvaluatedFields = async () => {
+            evaluatedFieldKeys = new Set();
+
+            for (const sheetName of RESPONSE_SHEET_CANDIDATES) {
+                try {
+                    const rows = await parseResponseSheet(sheetName);
+                    if (rows.length) {
+                        evaluatedFieldKeys = new Set(rows.map(row => makeFieldKey(row.zone, row.district, row.field)));
+                        return;
+                    }
+                } catch (error) {
+                    console.warn(`Cannot load response sheet: ${sheetName}`, error);
+                }
+            }
+        };
 
         const loadAssessorData = async () => {
             dataStatus.textContent = 'กำลังโหลด';
+            await loadEvaluatedFields();
 
             for (const sheetName of ASSESSOR_SHEET_CANDIDATES) {
                 try {
@@ -1149,10 +1194,17 @@
 
             const fields = [...new Set(allData
                 .filter(row => row.zone === selectedZone && row.district === selectedDistrict)
-                .map(row => row.field).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'th'));
+                .map(row => row.field).filter(Boolean))]
+                .filter(field => !evaluatedFieldKeys.has(makeFieldKey(selectedZone, selectedDistrict, field)))
+                .sort((a, b) => a.localeCompare(b, 'th'));
 
-            setOptions(nameSelect, '-- เลือกชื่อลานกีฬา --', fields);
-            nameSelect.disabled = false;
+            if (fields.length) {
+                setOptions(nameSelect, '-- เลือกชื่อลานกีฬา --', fields);
+                nameSelect.disabled = false;
+            } else {
+                setOptions(nameSelect, '-- ลานกีฬาในเขตนี้ประเมินครบแล้ว --', []);
+                nameSelect.disabled = true;
+            }
             updateProgress();
         });
 
@@ -1200,6 +1252,9 @@
 
         form.addEventListener('submit', e => {
             e.preventDefault();
+            const submittedZone = zoneSelect.value;
+            const submittedDistrict = districtSelect.value;
+            const submittedField = nameSelect.value;
 
             if(!GOOGLE_APPS_SCRIPT_URL) {
                 showSaveAlert('error', 'ยังไม่ได้ตั้งค่า Apps Script', 'กรุณาใส่ลิงก์ Google Apps Script ในซอร์สโค้ดก่อนใช้งานจริง');
@@ -1219,6 +1274,7 @@
             .then(data => {
                 if(data.status === 'success') {
                     showSaveAlert('success', 'บันทึกข้อมูลสำเร็จ', 'ระบบได้ส่งข้อมูลไปยัง Google Sheets เรียบร้อยแล้ว');
+                    evaluatedFieldKeys.add(makeFieldKey(submittedZone, submittedDistrict, submittedField));
                     form.reset();
                     resetSelect(districtSelect, '-- โปรดเลือกโซนก่อน --');
                     resetSelect(nameSelect, '-- โปรดเลือกเขตก่อน --');
