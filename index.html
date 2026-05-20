@@ -236,6 +236,10 @@
             content: " ";
         }
 
+        .mobile-subtitle-break::before {
+            content: " ";
+        }
+
         .overview-panel p {
             max-width: 720px;
             margin: 14px 0 0;
@@ -715,6 +719,14 @@
                 content: "";
             }
 
+            .mobile-subtitle-break {
+                display: block;
+            }
+
+            .mobile-subtitle-break::before {
+                content: "";
+            }
+
             .overview-panel p {
                 font-size: 0.95rem;
                 line-height: 1.65;
@@ -952,7 +964,7 @@
                         <div>
                             <span class="eyebrow"><span class="status-dot"></span><span id="sourceLabel">กำลังเชื่อมต่อข้อมูล</span></span>
                             <h1 id="page-title">ภาพรวมมาตรฐาน<span class="mobile-title-break">ลานกีฬา</span></h1>
-                            <p>ผลการประเมินลานกีฬา จุดที่ต้องปรับปรุง และสถิติการใช้งาน</p>
+                            <p>ผลการประเมินลานกีฬา จุดที่ต้องปรับปรุง<span class="mobile-subtitle-break">และสถิติการใช้งาน</span></p>
                         </div>
                         <div class="overview-meta">
                             <span class="meta-pill">อัปเดตล่าสุด: <span id="lastUpdate">กำลังโหลด</span></span>
