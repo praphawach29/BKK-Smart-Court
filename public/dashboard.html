@@ -354,6 +354,41 @@
         .status-chip.excellent { background: linear-gradient(135deg,#d1fae5,#a7f3d0); color:#047857; }
         .status-chip.pass     { background: linear-gradient(135deg,#fef3c7,#fde68a); color:#b45309; }
         .status-chip.fail     { background: linear-gradient(135deg,#ffe4e6,#fecdd3); color:#be123c; }
+        .score-details { min-width: 300px; white-space: normal; }
+        .score-details summary {
+            display:inline-flex; align-items:center; justify-content:center;
+            min-height: 32px; padding: 0 12px;
+            border-radius: 999px;
+            background: rgba(91,108,255,.1);
+            color: var(--indigo);
+            font-size: .78rem; font-weight: 800;
+            cursor: pointer;
+        }
+        .score-details summary::-webkit-details-marker { display:none; }
+        .score-breakdown {
+            display:grid;
+            grid-template-columns: repeat(2, minmax(0,1fr));
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .criterion-chip {
+            display:flex; align-items:center; justify-content:space-between; gap: 10px;
+            min-height: 34px;
+            padding: 7px 9px;
+            border: 1px solid rgba(120,130,170,.18);
+            border-radius: 10px;
+            background: rgba(255,255,255,.72);
+            color: #475569;
+            font-size: .74rem;
+            font-weight: 700;
+        }
+        .criterion-chip strong {
+            flex: 0 0 auto;
+            min-width: 30px;
+            color: var(--ink);
+            text-align: right;
+            font-family: 'Inter','Sarabun',sans-serif;
+        }
 
         .empty-state { display:none; padding: 40px 20px; color: var(--muted); text-align:center; font-weight: 700; }
 
@@ -443,6 +478,9 @@
             td[data-label="พื้นที่"] .place-meta, td[data-label="ชื่อลานกีฬา"] .place-meta {
                 justify-self:start; text-align:left;
             }
+            .score-details { min-width: 0; }
+            .score-details summary { justify-self: end; }
+            .score-breakdown { grid-template-columns: 1fr; }
             .score-chip, .status-chip { justify-self: end; }
         }
 
@@ -528,6 +566,12 @@
                         <label for="districtFilter">สำนักงานเขต</label>
                         <select id="districtFilter">
                             <option value="ทั้งหมด">ทุกสำนักงานเขต</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="assessorFilter">ผู้ประเมิน</label>
+                        <select id="assessorFilter">
+                            <option value="ทั้งหมด">ทุกผู้ประเมิน</option>
                         </select>
                     </div>
                     <div class="field">
@@ -628,7 +672,7 @@
                     <div class="table-tools">
                         <div class="field search-box">
                             <label for="searchInput">ค้นหา</label>
-                            <input id="searchInput" type="search" placeholder="ชื่อลานกีฬา เขต หรือโซน">
+                            <input id="searchInput" type="search" placeholder="ผู้ประเมิน ชื่อลานกีฬา เขต หรือโซน">
                         </div>
                         <button id="exportBtn" type="button" class="ghost-button">
                             <svg width="17" height="17" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
@@ -642,6 +686,8 @@
                             <tr>
                                 <th>พื้นที่</th>
                                 <th>ชื่อลานกีฬา</th>
+                                <th>ผู้ประเมิน</th>
+                                <th>คะแนนรายหัวข้อ</th>
                                 <th class="center">กายภาพ</th>
                                 <th class="center">บริหาร</th>
                                 <th class="center">ผู้ใช้</th>
@@ -674,8 +720,29 @@
         const physicalFields = ['fieldCondition', 'lighting', 'signage', 'equipment', 'firstAid', 'cleanliness', 'maintenance', 'trashBin', 'landscape', 'seating'];
         const managementFields = ['committee', 'prChannel', 'dailyReport', 'monthlyCheck', 'network', 'funding', 'volunteerTrain', 'committeeTrain'];
         const allCriteriaFields = [...physicalFields, ...managementFields];
+        const criteriaDisplayLabels = {
+            fieldCondition: 'พื้นสนาม',
+            lighting: 'ไฟส่องสว่าง',
+            signage: 'ป้ายสื่อสาร',
+            equipment: 'อุปกรณ์กีฬา',
+            firstAid: 'ปฐมพยาบาล',
+            cleanliness: 'ความสะอาด',
+            maintenance: 'ดูแลสม่ำเสมอ',
+            trashBin: 'ถังขยะ',
+            landscape: 'ภูมิทัศน์',
+            seating: 'ที่นั่งพัก',
+            committee: 'คณะกรรมการ',
+            prChannel: 'ประชาสัมพันธ์',
+            dailyReport: 'รายงานประจำวัน',
+            monthlyCheck: 'ตรวจสอบรายเดือน',
+            network: 'ภาคีเครือข่าย',
+            funding: 'แหล่งทุน',
+            volunteerTrain: 'อบรมอาสา',
+            committeeTrain: 'อบรมกรรมการ'
+        };
 
         const fieldAliases = {
+            assessor: ['assessorName', 'assessor', 'ชื่อผู้ประเมิน', 'ผู้ประเมิน'],
             zone: ['zone', 'โซน', 'โซนพื้นที่'],
             district: ['district', 'สำนักงานเขต', 'เขต'],
             name: ['name', 'ชื่อลาน', 'ชื่อลานกีฬา', 'ลานกีฬา'],
@@ -724,6 +791,7 @@
             visibleCount: document.getElementById('visibleCount'),
             zoneFilter: document.getElementById('zoneFilter'),
             districtFilter: document.getElementById('districtFilter'),
+            assessorFilter: document.getElementById('assessorFilter'),
             statusFilter: document.getElementById('statusFilter'),
             searchInput: document.getElementById('searchInput'),
             tableBody: document.getElementById('tableBody'),
@@ -736,12 +804,17 @@
         document.addEventListener('DOMContentLoaded', () => {
             Chart.defaults.font.family = "'Inter', 'Sarabun', sans-serif";
             loadDashboardData();
-            [el.districtFilter, el.statusFilter, el.searchInput].forEach(input => {
+            [el.assessorFilter, el.statusFilter, el.searchInput].forEach(input => {
                 input.addEventListener('input', applyFilters);
                 input.addEventListener('change', applyFilters);
             });
             el.zoneFilter.addEventListener('change', () => {
                 rebuildDistrictFilter();
+                rebuildAssessorFilter();
+                applyFilters();
+            });
+            el.districtFilter.addEventListener('change', () => {
+                rebuildAssessorFilter();
                 applyFilters();
             });
             el.exportBtn.addEventListener('click', exportVisibleData);
@@ -855,6 +928,7 @@
                     const name = getValue(row, 'name');
                     const zone = getValue(row, 'zone');
                     const district = getValue(row, 'district');
+                    const assessor = getValue(row, 'assessor');
                     if (!name && !zone && !district) return null;
 
                     const scores = {};
@@ -871,6 +945,7 @@
                         zone: zone || 'ไม่ระบุโซน',
                         district: district || 'ไม่ระบุเขต',
                         name: name || 'ไม่ระบุชื่อลานกีฬา',
+                        assessor: assessor || 'ไม่ระบุผู้ประเมิน',
                         type: getValue(row, 'type') || '-',
                         userCount: parseInt(getValue(row, 'userCount'), 10) || 0,
                         activityCount: parseInt(getValue(row, 'activityCount'), 10) || 0,
@@ -902,6 +977,7 @@
                             zone,
                             district,
                             name: `ลานกีฬา${district} ${i + 1}`,
+                            assessor: `ผู้ประเมิน ${((id + i) % 4) + 1}`,
                             type: ['ลานกีฬา A', 'ลานกีฬา B', 'ลานกีฬา C'][i % 3],
                             userCount: 70 + id * 9,
                             activityCount: 2 + (id % 8),
@@ -924,6 +1000,7 @@
         function populateFilters() {
             setOptions(el.zoneFilter, 'ทั้งหมด', 'ทุกโซนพื้นที่', unique(rawData.map(item => item.zone)));
             rebuildDistrictFilter();
+            rebuildAssessorFilter();
             el.statusFilter.value = 'ทั้งหมด';
             el.searchInput.value = '';
         }
@@ -932,6 +1009,17 @@
             const zone = el.zoneFilter.value;
             const source = zone === 'ทั้งหมด' ? rawData : rawData.filter(item => item.zone === zone);
             setOptions(el.districtFilter, 'ทั้งหมด', 'ทุกสำนักงานเขต', unique(source.map(item => item.district)));
+        }
+
+        function rebuildAssessorFilter() {
+            const zone = el.zoneFilter.value;
+            const district = el.districtFilter.value;
+            const source = rawData.filter(item => {
+                const matchesZone = zone === 'ทั้งหมด' || item.zone === zone;
+                const matchesDistrict = district === 'ทั้งหมด' || item.district === district;
+                return matchesZone && matchesDistrict;
+            });
+            setOptions(el.assessorFilter, 'ทั้งหมด', 'ทุกผู้ประเมิน', unique(source.map(item => item.assessor)));
         }
 
         function setOptions(select, defaultValue, defaultText, values) {
@@ -953,16 +1041,18 @@
         function applyFilters() {
             const zone = el.zoneFilter.value;
             const district = el.districtFilter.value;
+            const assessor = el.assessorFilter.value;
             const status = el.statusFilter.value;
             const query = el.searchInput.value.trim().toLowerCase();
 
             visibleData = rawData.filter(item => {
                 const matchesZone = zone === 'ทั้งหมด' || item.zone === zone;
                 const matchesDistrict = district === 'ทั้งหมด' || item.district === district;
+                const matchesAssessor = assessor === 'ทั้งหมด' || item.assessor === assessor;
                 const matchesStatus = status === 'ทั้งหมด' || getStatus(item.totalScore).key === status;
-                const searchable = `${item.name} ${item.zone} ${item.district} ${item.type}`.toLowerCase();
+                const searchable = `${item.assessor} ${item.name} ${item.zone} ${item.district} ${item.type}`.toLowerCase();
                 const matchesQuery = !query || searchable.includes(query);
-                return matchesZone && matchesDistrict && matchesStatus && matchesQuery;
+                return matchesZone && matchesDistrict && matchesAssessor && matchesStatus && matchesQuery;
             });
 
             updateKPIs(visibleData);
@@ -1085,6 +1175,19 @@
             return average(data.map(item => item.scores[field]).filter(value => value !== null));
         }
 
+        function formatScore(value) {
+            return value === null || value === undefined ? '-' : Number(value).toFixed(value % 1 === 0 ? 0 : 1);
+        }
+
+        function renderScoreBreakdown(item) {
+            return allCriteriaFields.map(field => `
+                <span class="criterion-chip">
+                    <span>${escapeHtml(criteriaDisplayLabels[field] || field)}</span>
+                    <strong>${formatScore(item.scores[field])}</strong>
+                </span>
+            `).join('');
+        }
+
         function updateTable(data) {
             el.tableBody.innerHTML = '';
             el.emptyState.style.display = data.length ? 'none' : 'block';
@@ -1100,6 +1203,15 @@
                     <td data-label="ชื่อลานกีฬา">
                         <div class="place-name">${escapeHtml(item.name)}</div>
                         <div class="place-meta">${escapeHtml(item.type)}</div>
+                    </td>
+                    <td data-label="ผู้ประเมิน">
+                        <div class="place-name">${escapeHtml(item.assessor)}</div>
+                    </td>
+                    <td data-label="คะแนนรายหัวข้อ">
+                        <details class="score-details">
+                            <summary>ดูคะแนนรายหัวข้อ</summary>
+                            <div class="score-breakdown">${renderScoreBreakdown(item)}</div>
+                        </details>
                     </td>
                     <td class="center" data-label="กายภาพ"><span class="score-chip">${item.physicalAverage.toFixed(1)}</span></td>
                     <td class="center" data-label="บริหาร"><span class="score-chip">${item.managementAverage.toFixed(1)}</span></td>
@@ -1127,13 +1239,15 @@
                 zone: item.zone,
                 district: item.district,
                 name: item.name,
+                assessor: item.assessor,
                 type: item.type,
                 physicalAverage: item.physicalAverage.toFixed(1),
                 managementAverage: item.managementAverage.toFixed(1),
                 userCount: item.userCount,
                 activityCount: item.activityCount,
                 totalScore: item.totalScore,
-                status: getStatus(item.totalScore).label
+                status: getStatus(item.totalScore).label,
+                ...Object.fromEntries(allCriteriaFields.map(field => [criteriaDisplayLabels[field] || field, formatScore(item.scores[field])]))
             }));
 
             const csv = Papa.unparse(rows);
